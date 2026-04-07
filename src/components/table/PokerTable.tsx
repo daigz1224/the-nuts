@@ -19,7 +19,7 @@ export function PokerTable({ gameState, currentPlayerId }: PokerTableProps) {
     : undefined
 
   return (
-    <div className="flex flex-col items-center gap-3 sm:gap-4 w-full max-w-[600px] mx-auto">
+    <div className="flex flex-col items-center gap-1 sm:gap-3 w-full max-w-[600px] mx-auto">
       {/* Opponents row */}
       <OpponentRow
         opponents={opponents}
@@ -28,23 +28,16 @@ export function PokerTable({ gameState, currentPlayerId }: PokerTableProps) {
         winnerIds={winnerIds}
       />
 
-      {/* Divider */}
-      <div className="w-full h-px bg-amber-800/30" />
-
       {/* Board area — pot + community cards */}
-      <div className="flex flex-col items-center gap-2 py-2 px-4 rounded-xl bg-bg-table/30 border border-amber-800/20 w-full">
+      <div className="flex flex-col items-center gap-1.5 py-1.5 sm:py-2 px-3 sm:px-4 rounded-xl bg-bg-table/30 border border-amber-800/20 w-full">
         <Pot amount={gameState.pot} />
         <CommunityCards cards={gameState.communityCards} />
       </div>
-
-      {/* Divider */}
-      <div className="w-full h-px bg-amber-800/30" />
 
       {/* Hero area */}
       <HeroArea
         player={hero}
         isCurrentTurn={currentPlayerId === 0}
-        gamePhase={gameState.phase}
         isWinner={winnerIds?.has(0)}
       />
     </div>

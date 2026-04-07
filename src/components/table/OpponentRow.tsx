@@ -41,7 +41,7 @@ export function OpponentRow({ opponents, currentPlayerId, gamePhase, winnerIds }
 
             {/* Name */}
             <span className={`text-[11px] font-medium truncate max-w-[60px] ${isWinner ? 'text-yellow-300' : 'text-text-primary'}`}>
-              {isWinner && '👑 '}{player.name}
+              {isWinner ? '👑' : player.avatar} {player.name}
             </span>
 
             {/* Showdown cards */}

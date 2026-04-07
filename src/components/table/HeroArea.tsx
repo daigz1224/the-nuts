@@ -1,20 +1,18 @@
 import type { Player } from '@/engine/game'
-import { GamePhase } from '@/engine/game'
 import { POSITION_NAMES_ZH } from '@/engine/positions'
 import { CardFace } from '@/components/cards/CardFace'
 
 interface HeroAreaProps {
   player: Player
   isCurrentTurn: boolean
-  gamePhase: GamePhase
   isWinner?: boolean
 }
 
-export function HeroArea({ player, isCurrentTurn, gamePhase: _gamePhase, isWinner = false }: HeroAreaProps) {
+export function HeroArea({ player, isCurrentTurn, isWinner = false }: HeroAreaProps) {
   return (
     <div
       className={`
-        flex flex-col items-center gap-2.5 px-8 py-4 rounded-2xl
+        flex flex-col items-center gap-1.5 sm:gap-2.5 px-4 sm:px-8 py-2 sm:py-4 rounded-2xl
         transition-all duration-200
         border
         ${isWinner
@@ -33,14 +31,14 @@ export function HeroArea({ player, isCurrentTurn, gamePhase: _gamePhase, isWinne
       )}
 
       {/* Hole cards — large with breathing room, greyed out if folded */}
-      <div className={`flex gap-3 py-1 ${player.isFolded ? 'grayscale opacity-40' : ''}`}>
+      <div className={`flex gap-2 sm:gap-3 py-0.5 sm:py-1 ${player.isFolded ? 'grayscale opacity-40' : ''}`}>
         {player.holeCards ? (
           <>
-            <CardFace card={player.holeCards[0]} size="md" />
-            <CardFace card={player.holeCards[1]} size="md" />
+            <CardFace card={player.holeCards[0]} size="sm" className="sm:!w-[52px] sm:!h-[72px] sm:!text-lg" />
+            <CardFace card={player.holeCards[1]} size="sm" className="sm:!w-[52px] sm:!h-[72px] sm:!text-lg" />
           </>
         ) : (
-          <div className="h-[72px]" />
+          <div className="h-[56px] sm:h-[72px]" />
         )}
       </div>
 
@@ -51,16 +49,14 @@ export function HeroArea({ player, isCurrentTurn, gamePhase: _gamePhase, isWinne
 
       {/* Name + chips */}
       <div className="flex items-center gap-3">
-        <span className="text-sm font-bold text-text-accent">{player.name}</span>
+        <span className="text-sm font-bold text-text-accent">{player.avatar} {player.name}</span>
         <span className="text-sm font-mono text-chip">{player.chips.toLocaleString()}</span>
       </div>
 
-      {/* Current bet */}
-      {player.currentBet > 0 && (
-        <span className="text-xs font-mono text-pot">
-          下注: {player.currentBet}
-        </span>
-      )}
+      {/* Current bet — always reserve height to prevent layout shifts */}
+      <span className={`text-xs font-mono ${player.currentBet > 0 ? 'text-pot' : 'text-transparent'}`}>
+        {player.currentBet > 0 ? `下注: ${player.currentBet}` : '\u00A0'}
+      </span>
     </div>
   )
 }

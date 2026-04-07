@@ -20,28 +20,19 @@ export function AppShell() {
   const isShowdown = gameState.phase === GamePhase.Showdown
 
   return (
-    <div className="flex flex-col min-h-full bg-bg-primary">
-      {/* Top bar: phase indicator on left, HUD notch in center */}
+    <div className="relative flex flex-col h-dvh overflow-hidden bg-bg-primary">
+      {/* Top HUD — fixed-height zone so table never shifts vertically */}
       {!isIdle && (
-        <div className="relative shrink-0">
-          {/* Phase indicator — visible on both sides of the notch */}
-          <div className="flex items-center justify-between px-4 py-1.5">
-            <span className="text-xs text-text-muted font-mono">
-              {gameState.handNumber > 0 && `#${gameState.handNumber}`}
-              {gameState.phase !== GamePhase.Idle && ` · ${gameState.phase}`}
-            </span>
-            {isProcessingAI && (
-              <span className="text-[10px] text-text-muted">AI 思考中...</span>
-            )}
+        <div className="shrink-0 h-[28vh] max-h-[200px] min-h-[100px] relative">
+          <div className="absolute inset-x-0 top-0 z-20">
+            <TopHud gameState={gameState} isProcessingAI={isProcessingAI} />
           </div>
-          {/* HUD notch */}
-          <TopHud gameState={gameState} />
         </div>
       )}
 
-      {/* Main table area */}
-      <div className="flex-1 flex flex-col items-center justify-center p-4 relative min-h-0">
-
+      {/* Table area — justify-start prevents re-centering jitter when content height changes */}
+      <div className={`flex-1 flex flex-col items-center px-2 sm:px-4 relative min-h-0 overflow-y-auto
+                       ${isIdle ? 'justify-center p-2 sm:p-4' : 'justify-start pb-2'}`}>
         {isIdle ? (
           <div className="flex flex-col items-center gap-4">
             <h1 className="text-3xl font-bold text-text-accent font-[--font-title] drop-shadow-[0_2px_4px_rgba(255,215,0,0.3)]">
@@ -56,27 +47,35 @@ export function AppShell() {
           <>
             <PokerTable gameState={gameState} currentPlayerId={currentPlayerId} />
 
-            {/* Showdown result */}
+            {/* Showdown result — inside scroll area */}
             {isShowdown && (
-              <div className="mt-4 flex flex-col items-center gap-3 w-full max-w-[600px]">
+              <div className="mt-3 flex flex-col items-center gap-3 w-full max-w-[600px]">
                 <ShowdownResult gameState={gameState} />
-                <Button variant="call" onClick={startNewHand}>
-                  开始新手牌
-                </Button>
               </div>
             )}
-
           </>
         )}
       </div>
 
-      {/* Control panel */}
-      {!isIdle && !isShowdown && (
-        <ControlPanel
-          available={available}
-          isPlayerTurn={isPlayerTurn && !isProcessingAI}
-          onAction={playerAct}
-        />
+      {/* Bottom action area — auto height with iOS safe-area padding */}
+      {!isIdle && (
+        <div className="shrink-0 border-t border-amber-800/30 flex flex-col items-center justify-end"
+             style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0.5rem))' }}>
+          {isShowdown ? (
+            <div className="flex justify-center pt-3 pb-2 px-4">
+              <Button variant="call" onClick={startNewHand}>
+                开始新手牌
+              </Button>
+            </div>
+          ) : (
+            <ControlPanel
+              available={available}
+              isPlayerTurn={isPlayerTurn && !isProcessingAI}
+              onAction={playerAct}
+              pot={gameState.pot}
+            />
+          )}
+        </div>
       )}
     </div>
   )

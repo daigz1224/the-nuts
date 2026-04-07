@@ -8,11 +8,8 @@ import { calculatePotOdds, type PotOddsResult } from '@/engine/pot-odds'
 import { bestOfSeven, evaluateFive } from '@/engine/evaluator'
 import type { HandResult } from '@/engine/hand-rank'
 import { CardFace } from '@/components/cards/CardFace'
-import { EquityBar } from './EquityBar'
-import { HandStrengthBadge } from './HandStrengthBadge'
-import { OddsDisplay } from './OddsDisplay'
 
-interface HudPanelProps {
+export interface HudPanelProps {
   gameState: GameState
   equity: EquityResult | null
   isCalculating?: boolean
@@ -38,12 +35,10 @@ export function HudPanel({ gameState, equity, isCalculating = false }: HudPanelP
   if (gameState.communityCards.length >= 5) {
     currentHand = bestOfSeven([...player.holeCards, ...gameState.communityCards.slice(0, 5)])
   } else if (gameState.communityCards.length >= 3) {
-    // On flop (5 cards) or turn (6 cards), evaluate best available
     const all = [...player.holeCards, ...gameState.communityCards]
     if (all.length === 7) {
       currentHand = bestOfSeven(all)
     } else if (all.length === 6) {
-      // 6 cards: find best 5
       let best: HandResult | null = null
       for (let skip = 0; skip < 6; skip++) {
         const five = all.filter((_, i) => i !== skip)
@@ -69,108 +64,111 @@ export function HudPanel({ gameState, equity, isCalculating = false }: HudPanelP
       ? calculatePotOdds(gameState.pot, callAmount, equity.winRate)
       : null
 
+  const winPct = equity ? Math.round(equity.winRate * 100) : null
+  const tiePct = equity ? Math.round(equity.tieRate * 100) : null
+  const barColor = winPct === null ? 'bg-stone-500' : winPct >= 50 ? 'bg-green-500' : winPct >= 30 ? 'bg-yellow-500' : 'bg-red-500'
+
   return (
-    <div className="flex flex-col gap-3">
-      {/* Pre-flop: Hand Strength */}
+    <div className="flex flex-col gap-1.5">
+      {/* Row 1: Hand name + tier badge */}
       {handStrength && (
-        <Section title="起手牌">
-          <HandStrengthBadge
-            tier={handStrength.tier}
-            tierLabel={handStrength.tierLabel}
-            handName={handStrength.handName}
-          />
-          <p className="text-[11px] text-text-secondary mt-1">
-            {handStrength.positionAdvice}
-          </p>
-        </Section>
+        <Row>
+          <span className="font-mono font-bold text-text-accent">{handStrength.handName}</span>
+          <TierPill tier={handStrength.tier} label={handStrength.tierLabel} />
+          <span className="text-text-muted ml-auto text-[10px] truncate max-w-[45%] text-right">{handStrength.positionAdvice}</span>
+        </Row>
       )}
 
-      {/* Post-flop: Current Hand */}
-      {currentHand && (
-        <Section title="当前牌力">
-          <div className="text-sm font-bold text-text-accent">
-            {currentHand.description}
+      {/* Row 1b: Post-flop current hand */}
+      {currentHand && !handStrength && (
+        <Row>
+          <span className="font-bold text-text-accent">{currentHand.description}</span>
+        </Row>
+      )}
+
+      {/* Row 2: Equity bar — compact inline */}
+      <div className="flex items-center gap-2 mb-0.5">
+          <span className="text-[10px] text-text-muted w-6 shrink-0">胜率</span>
+          <div className="flex-1 h-1.5 bg-bg-card rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+              style={{ width: `${Math.min((winPct ?? 0) + (tiePct ?? 0), 100)}%` }}
+            />
           </div>
-        </Section>
-      )}
-
-      {/* Equity */}
-      <Section title="">
-        {isCalculating ? (
-          <div className="text-[11px] text-text-muted">计算胜率中...</div>
-        ) : equity ? (
-          <EquityBar winRate={equity.winRate} tieRate={equity.tieRate} />
-        ) : null}
-      </Section>
-
-      {/* Outs */}
-      {outs && outs.outsCount > 0 && (
-        <Section title="Outs">
-          <div className="flex justify-between items-baseline">
-            <span className="text-sm font-mono font-bold text-text-accent">
-              {outs.outsCount} 张
+          {isCalculating ? (
+            <span className="text-[10px] text-text-muted w-16 text-right">计算中…</span>
+          ) : winPct !== null ? (
+            <span className="font-mono font-bold text-[11px] text-text-accent w-16 text-right">
+              {winPct}%{tiePct && tiePct > 0 ? <span className="text-text-muted"> +{tiePct}%</span> : ''}
             </span>
-            <span className="text-[11px] text-text-secondary">
-              改善概率 {Math.round(outs.improveProb * 100)}%
-            </span>
-          </div>
-          {outs.drawTypes.length > 0 && (
-            <div className="flex gap-1 flex-wrap mt-1">
-              {outs.drawTypes.map((type, i) => (
-                <span
-                  key={i}
-                  className="text-[10px] bg-bg-card px-1.5 py-0.5 rounded text-text-secondary"
-                >
-                  {type}
-                </span>
-              ))}
-            </div>
-          )}
-          <OutsCards outs={outs.outs} />
-        </Section>
-      )}
+          ) : null}
+      </div>
 
-      {/* Pot Odds */}
+      {/* Row 3: Pot odds — single line */}
       {potOdds && (
-        <Section title="底池赔率">
-          <OddsDisplay
-            potOdds={potOdds.potOdds}
-            neededWinRate={potOdds.neededWinRate}
-            currentWinRate={equity?.winRate ?? 0}
-            isPositiveEV={potOdds.isPositiveEV}
-            evDescription={potOdds.evDescription}
-          />
-        </Section>
+        <Row className={potOdds.isPositiveEV ? 'bg-green-500/10 rounded px-1.5 -mx-1.5' : 'bg-red-500/10 rounded px-1.5 -mx-1.5'}>
+          <span className={`text-[11px] font-bold ${potOdds.isPositiveEV ? 'text-green-400' : 'text-red-400'}`}>
+            {potOdds.isPositiveEV ? '+EV' : '-EV'}
+          </span>
+          <span className="text-[10px] text-text-secondary">
+            赔率 {potOdds.potOdds.toFixed(1)}:1
+          </span>
+          <span className="text-[10px] text-text-muted ml-auto">
+            需 {Math.round(potOdds.neededWinRate * 100)}% / 有 {winPct}%
+          </span>
+        </Row>
       )}
 
-      {/* Showdown */}
+      {/* Row 4: Outs — inline compact */}
+      {outs && outs.outsCount > 0 && (
+        <div>
+          <Row>
+            <span className="text-[10px] text-text-muted">Outs</span>
+            <span className="font-mono font-bold text-[11px] text-text-accent">{outs.outsCount}张</span>
+            <span className="text-[10px] text-text-muted">≈{Math.round(outs.improveProb * 100)}%</span>
+            {outs.drawTypes.length > 0 && (
+              <span className="text-[10px] text-text-secondary ml-auto truncate max-w-[40%] text-right">
+                {outs.drawTypes.join(' · ')}
+              </span>
+            )}
+          </Row>
+          <OutsCards outs={outs.outs} />
+        </div>
+      )}
+
+      {/* Showdown — just show hero's hand; full results in ShowdownResult */}
       {phase === GamePhase.Showdown && currentHand && (
-        <Section title="本手结果">
-          <div className="text-sm text-text-accent">
-            {currentHand.description}
-          </div>
-          {gameState.winners?.map((w, i) => (
-            <div key={i} className="text-[11px] text-text-secondary">
-              {gameState.players[w.playerId].name} 赢得 {w.amount}
-              {w.hand && ` — ${w.hand}`}
-            </div>
-          ))}
-        </Section>
+        <Row>
+          <span className="font-bold text-text-accent">{currentHand.description}</span>
+          <span className="text-text-muted ml-auto text-[10px]">详见下方结算</span>
+        </Row>
       )}
     </div>
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+/** Generic compact row */
+function Row({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className="border-t border-border-default/30 pt-2">
-      {title && (
-        <div className="text-[10px] text-text-muted uppercase tracking-wide mb-1">
-          {title}
-        </div>
-      )}
+    <div className={`flex items-center gap-1.5 py-0.5 text-[11px] ${className}`}>
       {children}
     </div>
+  )
+}
+
+const TIER_COLORS: Record<number, string> = {
+  1: 'bg-amber-500/25 text-amber-300',
+  2: 'bg-blue-500/25 text-blue-300',
+  3: 'bg-green-500/25 text-green-300',
+  4: 'bg-stone-500/25 text-stone-300',
+  5: 'bg-red-500/25 text-red-300',
+}
+
+function TierPill({ tier, label }: { tier: number; label: string }) {
+  return (
+    <span className={`text-[9px] px-1.5 py-px rounded-full font-medium ${TIER_COLORS[tier] || TIER_COLORS[5]}`}>
+      {label}
+    </span>
   )
 }
 
@@ -183,7 +181,7 @@ function OutsCards({ outs }: { outs: Card[] }) {
   })
 
   return (
-    <div className="flex flex-wrap gap-1 mt-2">
+    <div className="flex flex-wrap gap-0.5 mt-0.5">
       {sorted.map((card, i) => (
         <CardFace key={i} card={card} size="xxs" />
       ))}
@@ -193,18 +191,13 @@ function OutsCards({ outs }: { outs: Card[] }) {
 
 function IdleHud() {
   return (
-    <div className="flex flex-col gap-3">
-      <p className="text-[11px] text-text-muted">
-        开始游戏后，这里将显示实时概率数据、手牌评估和下注建议。
-      </p>
-      <div className="border-t border-border-default/30 pt-2">
-        <div className="text-[10px] text-text-muted uppercase tracking-wide mb-1">学习要点</div>
-        <ul className="text-[11px] text-text-secondary space-y-1">
-          <li>- 胜率：你赢下底池的概率</li>
-          <li>- Outs：能改善你牌力的牌</li>
-          <li>- 底池赔率：是否值得跟注</li>
-          <li>- +EV：长期盈利的决策</li>
-        </ul>
+    <div className="text-[11px] text-text-muted space-y-1">
+      <p>开始游戏后显示实时概率数据。</p>
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-text-secondary">
+        <span>胜率</span>
+        <span>Outs</span>
+        <span>底池赔率</span>
+        <span>+EV / -EV</span>
       </div>
     </div>
   )

@@ -61,12 +61,12 @@ export function PlayerSeat({ player, isCurrentTurn, isHuman, gamePhase, compact 
       {/* Chips */}
       <ChipStack amount={player.chips} className={compact ? 'text-xs' : ''} />
 
-      {/* Current bet */}
-      {player.currentBet > 0 && (
-        <span className={`${compact ? 'text-[8px]' : 'text-[10px]'} font-mono text-pot`}>
-          {compact ? player.currentBet : `下注: ${player.currentBet}`}
-        </span>
-      )}
+      {/* Current bet — always reserve height to prevent layout shifts */}
+      <span className={`${compact ? 'text-[8px]' : 'text-[10px]'} font-mono ${player.currentBet > 0 ? 'text-pot' : 'text-transparent'}`}>
+        {player.currentBet > 0
+          ? (compact ? player.currentBet : `${player.currentBet}`)
+          : '\u00A0'}
+      </span>
 
       {/* All-in indicator */}
       {player.isAllIn && (

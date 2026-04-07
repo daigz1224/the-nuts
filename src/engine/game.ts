@@ -13,9 +13,19 @@ export enum GamePhase {
   Showdown = 'showdown',
 }
 
+export const PHASE_NAMES_ZH: Record<GamePhase, string> = {
+  [GamePhase.Idle]: '',
+  [GamePhase.PreFlop]: '翻牌前',
+  [GamePhase.Flop]: '翻牌',
+  [GamePhase.Turn]: '转牌',
+  [GamePhase.River]: '河牌',
+  [GamePhase.Showdown]: '摊牌',
+}
+
 export interface Player {
   id: number
   name: string
+  avatar: string
   chips: number
   holeCards: [Card, Card] | null
   position: Position | null
@@ -49,12 +59,12 @@ const DEFAULT_STARTING_CHIPS = 1000
 
 export function createInitialState(): GameState {
   const players: Player[] = [
-    { id: 0, name: '旅行者', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0 },
-    { id: 1, name: '吉安娜', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0 },
-    { id: 2, name: '萨尔', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0 },
-    { id: 3, name: '古尔丹', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0 },
-    { id: 4, name: '雷克萨', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0 },
-    { id: 5, name: '乌瑟尔', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0 },
+    { id: 0, name: '旅行者', avatar: '🎴', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0 },
+    { id: 1, name: '吉安娜', avatar: '❄️', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0 },
+    { id: 2, name: '萨尔',   avatar: '⚡', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0 },
+    { id: 3, name: '古尔丹', avatar: '🔥', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0 },
+    { id: 4, name: '雷克萨', avatar: '🐻', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0 },
+    { id: 5, name: '乌瑟尔', avatar: '🛡️', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0 },
   ]
 
   return {
