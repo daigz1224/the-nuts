@@ -17,6 +17,9 @@ describe('calculateEquity', () => {
     const total = result.winRate + result.tieRate + result.lossRate
     expect(total).toBeCloseTo(1, 1)
     expect(result.sampleSize).toBe(500)
+    // equity should be between winRate and winRate+tieRate
+    expect(result.equity).toBeGreaterThanOrEqual(result.winRate - 0.01)
+    expect(result.equity).toBeLessThanOrEqual(result.winRate + result.tieRate + 0.01)
   })
 
   it('AA vs 1 opponent preflop should have ~80%+ equity', () => {

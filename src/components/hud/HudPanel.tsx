@@ -2,10 +2,10 @@ import type { GameState } from '@/engine/game'
 import { GamePhase } from '@/engine/game'
 import type { Card } from '@/engine/card'
 import type { EquityResult } from '@/engine/equity'
-import { calculateOuts, type OutsResult } from '@/engine/outs'
+import { calculateOuts } from '@/engine/outs'
 import { evaluatePreFlopStrength, type HandStrengthResult } from '@/engine/hand-strength'
 import { calculatePotOdds, type PotOddsResult } from '@/engine/pot-odds'
-import { bestOfSeven, evaluateFive } from '@/engine/evaluator'
+import { evaluateBest } from '@/engine/evaluator'
 import type { HandResult } from '@/engine/hand-rank'
 import { CardFace } from '@/components/cards/CardFace'
 
@@ -31,28 +31,13 @@ export function HudPanel({ gameState, equity, isCalculating = false }: HudPanelP
       : null
 
   // Current hand evaluation (post-flop)
-  let currentHand: HandResult | null = null
-  if (gameState.communityCards.length >= 5) {
-    currentHand = bestOfSeven([...player.holeCards, ...gameState.communityCards.slice(0, 5)])
-  } else if (gameState.communityCards.length >= 3) {
-    const all = [...player.holeCards, ...gameState.communityCards]
-    if (all.length === 7) {
-      currentHand = bestOfSeven(all)
-    } else if (all.length === 6) {
-      let best: HandResult | null = null
-      for (let skip = 0; skip < 6; skip++) {
-        const five = all.filter((_, i) => i !== skip)
-        const result = evaluateFive(five)
-        if (!best || result.score > best.score) best = result
-      }
-      currentHand = best
-    } else if (all.length === 5) {
-      currentHand = evaluateFive(all)
-    }
-  }
+  const currentHand: HandResult | null =
+    gameState.communityCards.length >= 3
+      ? evaluateBest([...player.holeCards, ...gameState.communityCards].slice(0, 7))
+      : null
 
   // Outs (flop/turn only)
-  const outs: OutsResult | null =
+  const outs =
     gameState.communityCards.length >= 3 && gameState.communityCards.length <= 4
       ? calculateOuts(player.holeCards, gameState.communityCards)
       : null
@@ -61,7 +46,7 @@ export function HudPanel({ gameState, equity, isCalculating = false }: HudPanelP
   const callAmount = gameState.currentBet - player.currentBet
   const potOdds: PotOddsResult | null =
     callAmount > 0 && equity
-      ? calculatePotOdds(gameState.pot, callAmount, equity.winRate)
+      ? calculatePotOdds(gameState.pot, callAmount, equity.equity)
       : null
 
   const winPct = equity ? Math.round(equity.winRate * 100) : null
@@ -111,15 +96,18 @@ export function HudPanel({ gameState, equity, isCalculating = false }: HudPanelP
             {potOdds.isPositiveEV ? '+EV' : '-EV'}
           </span>
           <span className="text-[10px] text-text-secondary">
-            赔率 {potOdds.potOdds.toFixed(1)}:1
+            赔率 {(1 / potOdds.potOdds - 1).toFixed(1)}:1
           </span>
           <span className="text-[10px] text-text-muted ml-auto">
-            需 {Math.round(potOdds.neededWinRate * 100)}% / 有 {winPct}%
+            需 {Math.round(potOdds.neededWinRate * 100)}% / 有 {Math.round(equity!.equity * 100)}%
+          </span>
+          <span className={`text-[10px] font-mono ${potOdds.ev >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            {potOdds.ev >= 0 ? '+' : ''}{potOdds.ev.toFixed(0)}
           </span>
         </Row>
       )}
 
-      {/* Row 4: Outs — inline compact */}
+      {/* Row 4: Outs */}
       {outs && outs.outsCount > 0 && (
         <div>
           <Row>
@@ -173,6 +161,7 @@ function TierPill({ tier, label }: { tier: number; label: string }) {
 }
 
 const SUIT_ORDER: Record<string, number> = { s: 0, h: 1, d: 2, c: 3 }
+const MAX_OUTS_SHOWN = 16
 
 function OutsCards({ outs }: { outs: Card[] }) {
   const sorted = [...outs].sort((a, b) => {
@@ -180,11 +169,17 @@ function OutsCards({ outs }: { outs: Card[] }) {
     return SUIT_ORDER[a.suit] - SUIT_ORDER[b.suit]
   })
 
+  const shown = sorted.slice(0, MAX_OUTS_SHOWN)
+  const overflow = sorted.length - MAX_OUTS_SHOWN
+
   return (
-    <div className="flex flex-wrap gap-0.5 mt-0.5">
-      {sorted.map((card, i) => (
+    <div className="flex items-center gap-0.5 mt-0.5 overflow-hidden">
+      {shown.map((card, i) => (
         <CardFace key={i} card={card} size="xxs" />
       ))}
+      {overflow > 0 && (
+        <span className="text-[9px] text-text-muted shrink-0 ml-0.5">+{overflow}</span>
+      )}
     </div>
   )
 }

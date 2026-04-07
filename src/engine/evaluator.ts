@@ -140,6 +140,22 @@ export function evaluateFive(cards: Card[]): HandResult {
   }
 }
 
+/** Evaluate 5, 6, or 7 cards, return the best 5-card hand */
+export function evaluateBest(cards: Card[]): HandResult {
+  if (cards.length < 5 || cards.length > 7) throw new Error('evaluateBest requires 5-7 cards')
+  if (cards.length === 5) return evaluateFive(cards)
+  if (cards.length === 7) return bestOfSeven(cards)
+
+  // 6 cards: C(6,5) = 6 combinations
+  let best: HandResult | null = null
+  for (let skip = 0; skip < 6; skip++) {
+    const five = cards.filter((_, i) => i !== skip)
+    const result = evaluateFive(five)
+    if (!best || result.score > best.score) best = result
+  }
+  return best!
+}
+
 /** Evaluate 7 cards, return the best 5-card hand */
 export function bestOfSeven(sevenCards: Card[]): HandResult {
   if (sevenCards.length !== 7) throw new Error('bestOfSeven requires exactly 7 cards')

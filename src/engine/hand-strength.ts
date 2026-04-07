@@ -46,8 +46,10 @@ function getHandTier(high: number, low: number, suited: boolean, pair: boolean):
     if (low === Rank.King) return 2             // AKo
     if (low === Rank.Queen && suited) return 2  // AQs
     if (low === Rank.Queen) return 3            // AQo
-    if (low === Rank.Jack && suited) return 2   // AJs
+    if (low === Rank.Jack && suited) return 3   // AJs
+    if (low === Rank.Jack) return 4             // AJo
     if (low === Rank.Ten && suited) return 3    // ATs
+    if (low === Rank.Ten) return 4              // ATo
     if (suited) return 4                        // Axs
     return 5                                    // Axo
   }
@@ -55,15 +57,19 @@ function getHandTier(high: number, low: number, suited: boolean, pair: boolean):
   // King-high
   if (high === Rank.King) {
     if (low === Rank.Queen && suited) return 3  // KQs
+    if (low === Rank.Queen) return 3            // KQo
     if (low === Rank.Jack && suited) return 3   // KJs
-    if (low >= Rank.Ten && suited) return 4     // KTs
+    if (low === Rank.Jack) return 4             // KJo
+    if (low >= Rank.Ten && suited) return 3     // KTs
+    if (low === Rank.Ten) return 4              // KTo
     return 5
   }
 
   // Queen-high
   if (high === Rank.Queen) {
     if (low === Rank.Jack && suited) return 3   // QJs
-    if (low === Rank.Ten && suited) return 4    // QTs
+    if (low === Rank.Jack) return 4             // QJo
+    if (low === Rank.Ten && suited) return 3    // QTs
     return 5
   }
 

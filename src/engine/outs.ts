@@ -1,6 +1,6 @@
 import type { Card } from './card'
 import { createDeck } from './card'
-import { bestOfSeven, evaluateFive } from './evaluator'
+import { evaluateBest } from './evaluator'
 import { HandCategory } from './hand-rank'
 
 export interface OutsResult {
@@ -30,32 +30,19 @@ export function calculateOuts(
     c => !knownCards.has(`${c.rank}-${c.suit}`)
   )
 
-  // Current hand category
-  const currentCategory = communityCards.length >= 5
-    ? bestOfSeven([...holeCards, ...communityCards.slice(0, 5)]).category
-    : evaluatePartialCategory(holeCards, communityCards)
+  const currentResult = evaluateBest([...holeCards, ...communityCards])
+  const currentScore = currentResult.score
 
   const outs: Card[] = []
 
   for (const card of remaining) {
-    const newCommunity = [...communityCards, card]
-
-    let newCategory: HandCategory
-    if (newCommunity.length >= 5) {
-      newCategory = bestOfSeven([...holeCards, ...newCommunity.slice(0, 5)]).category
-    } else {
-      newCategory = evaluatePartialCategory(holeCards, newCommunity)
-    }
-
-    // Only count as an out if the hand CATEGORY improves
-    // (e.g., high card → pair, pair → two pair, draw → flush/straight)
-    if (newCategory > currentCategory) {
+    const newScore = evaluateBest([...holeCards, ...communityCards, card]).score
+    if (newScore > currentScore) {
       outs.push(card)
     }
   }
 
-  // Detect draw types
-  const drawTypes = detectDrawTypes(holeCards, communityCards, currentCategory)
+  const drawTypes = detectDrawTypes(holeCards, communityCards, currentResult.category)
 
   return {
     outs,
@@ -63,30 +50,6 @@ export function calculateOuts(
     drawTypes,
     improveProb: remaining.length > 0 ? outs.length / remaining.length : 0,
   }
-}
-
-function evaluatePartialCategory(holeCards: [Card, Card], communityCards: Card[]): HandCategory {
-  const all = [...holeCards, ...communityCards]
-  if (all.length >= 7) {
-    return bestOfSeven(all.slice(0, 7)).category
-  }
-  if (all.length === 6) {
-    let best: HandCategory = HandCategory.HighCard
-    let bestScore = 0
-    for (let skip = 0; skip < 6; skip++) {
-      const five = all.filter((_, i) => i !== skip)
-      const result = evaluateFive(five)
-      if (result.score > bestScore) {
-        bestScore = result.score
-        best = result.category
-      }
-    }
-    return best
-  }
-  if (all.length === 5) {
-    return evaluateFive(all).category
-  }
-  return HandCategory.HighCard
 }
 
 /**
@@ -116,8 +79,6 @@ function detectDrawTypes(
   const uniqueRanks = [...new Set(all.map(c => c.rank))].sort((a, b) => a - b)
 
   if (currentCategory < HandCategory.Straight) {
-    // Open-ended straight draw: 4 consecutive ranks with room on both sides
-    // Gutshot: 4 ranks with one gap
     const { openEnded, gutshot } = detectStraightDraws(uniqueRanks)
     if (openEnded) draws.push('两头顺听牌')
     else if (gutshot) draws.push('卡顺听牌')
@@ -131,7 +92,6 @@ function detectDrawTypes(
 }
 
 function detectStraightDraws(sortedRanks: number[]): { openEnded: boolean; gutshot: boolean } {
-  // Check all windows of 5 consecutive rank values
   let openEnded = false
   let gutshot = false
 
@@ -146,7 +106,6 @@ function detectStraightDraws(sortedRanks: number[]): { openEnded: boolean; gutsh
     const inWindow = ranks.filter(r => r >= low && r <= high).length
 
     if (inWindow === 4) {
-      // Check if it's open-ended (both ends open) or gutshot (one gap in middle)
       const present = new Set(ranks.filter(r => r >= low && r <= high))
       let gaps = 0
       for (let r = low; r <= high; r++) {
@@ -154,10 +113,8 @@ function detectStraightDraws(sortedRanks: number[]): { openEnded: boolean; gutsh
       }
 
       if (gaps === 1) {
-        // Check if the missing card is at the edge or middle
         const missingRank = [low, low + 1, low + 2, low + 3, low + 4].find(r => !present.has(r))!
         if (missingRank === low || missingRank === high) {
-          // Edge missing — could be open-ended if not at board boundary
           if (missingRank > 1 && missingRank < 14) {
             openEnded = true
           } else {

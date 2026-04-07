@@ -36,7 +36,7 @@ export function MobileHud({ gameState }: MobileHudProps) {
   const winPct = equity ? Math.round(equity.winRate * 100) : null
   const callAmount = gameState.currentBet - player.currentBet
   const potOdds = callAmount > 0 && equity
-    ? calculatePotOdds(gameState.pot, callAmount, equity.winRate)
+    ? calculatePotOdds(gameState.pot, callAmount, equity.equity)
     : null
   const handStrength = phase === GamePhase.PreFlop
     ? evaluatePreFlopStrength(player.holeCards, player.position)

@@ -6,6 +6,8 @@ export interface EquityResult {
   winRate: number
   tieRate: number
   lossRate: number
+  /** Effective equity: winRate + weighted tieRate (tie pot share) */
+  equity: number
   sampleSize: number
 }
 
@@ -32,12 +34,13 @@ export function calculateEquity(
   const cardsNeeded = cardsToBoard + numOpponents * 2
 
   if (remaining.length < cardsNeeded) {
-    return { winRate: 0, tieRate: 0, lossRate: 0, sampleSize: 0 }
+    return { winRate: 0, tieRate: 0, lossRate: 0, equity: 0, sampleSize: 0 }
   }
 
   let wins = 0
   let ties = 0
   let losses = 0
+  let tieShareSum = 0 // Sum of (1/numTiedPlayers) across tie simulations
 
   for (let sim = 0; sim < simulations; sim++) {
     // Fisher-Yates partial shuffle — only shuffle the first `cardsNeeded` positions
@@ -63,7 +66,7 @@ export function calculateEquity(
 
     // Evaluate opponents
     let heroWins = true
-    let heroTies = false
+    let tiedCount = 1 // hero counts as 1
 
     for (let opp = 0; opp < numOpponents; opp++) {
       const oppCards: [Card, Card] = [deck[idx++], deck[idx++]]
@@ -72,26 +75,34 @@ export function calculateEquity(
 
       if (oppResult.score > heroResult.score) {
         heroWins = false
-        heroTies = false
+        tiedCount = 0
         break
       } else if (oppResult.score === heroResult.score) {
-        heroTies = true
+        tiedCount++
       }
     }
 
     if (!heroWins) {
       losses++
-    } else if (heroTies) {
+    } else if (tiedCount > 1) {
       ties++
+      tieShareSum += 1 / tiedCount
     } else {
       wins++
     }
   }
 
+  const winRate = wins / simulations
+  const tieRate = ties / simulations
+  const lossRate = losses / simulations
+  // Effective equity: full credit for wins + proportional share for ties
+  const equity = winRate + (ties > 0 ? tieShareSum / simulations : 0)
+
   return {
-    winRate: wins / simulations,
-    tieRate: ties / simulations,
-    lossRate: losses / simulations,
+    winRate,
+    tieRate,
+    lossRate,
+    equity,
     sampleSize: simulations,
   }
 }
