@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  /* Background — dark wood tones */
+  --color-bg-primary: #1A0E0A;
+  --color-bg-secondary: #2C1810;
+  --color-bg-surface: #3D2317;
+  --color-bg-table: #1B5E20;
+  --color-bg-card: #4A2C1A;
+
+  /* Action colors — Hearthstone gem tones */
+  --color-action-fold: #8B2020;
+  --color-action-call: #1565C0;
+  --color-action-raise: #C8860A;
+  --color-action-check: #2E7D32;
+
+  /* Text — warm parchment */
+  --color-text-primary: #F5E6D0;
+  --color-text-secondary: #BFA77A;
+  --color-text-accent: #FFD700;
+  --color-text-muted: #7A6248;
+
+  /* Card suits */
+  --color-suit-spade: #1a1a2e;
+  --color-suit-heart: #D32F2F;
+  --color-suit-diamond: #D32F2F;
+  --color-suit-club: #1a1a2e;
+
+  /* Chip / pot — gold */
+  --color-chip: #FFD700;
+  --color-pot: #FFB300;
+
+  /* Borders — gold / bronze */
+  --color-border-default: #8B6914;
+  --color-border-active: #FFD700;
+  --color-border-highlight: #FFA000;
+
+  /* Fonts */
+  --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
+  --font-sans: 'Inter', 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif;
+  --font-title: Georgia, 'Noto Serif SC', 'PingFang SC', serif;
+
+  /* Border radius */
+  --radius-card: 6px;
+  --radius-button: 8px;
+  --radius-surface: 10px;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+}
