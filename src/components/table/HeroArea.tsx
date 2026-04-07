@@ -10,9 +10,7 @@ interface HeroAreaProps {
   isWinner?: boolean
 }
 
-export function HeroArea({ player, isCurrentTurn, gamePhase, isWinner = false }: HeroAreaProps) {
-  const isShowdown = gamePhase === GamePhase.Showdown
-
+export function HeroArea({ player, isCurrentTurn, gamePhase: _gamePhase, isWinner = false }: HeroAreaProps) {
   return (
     <div
       className={`

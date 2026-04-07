@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import {
+  type GameState,
   GamePhase,
   createInitialState,
   startNewHand,

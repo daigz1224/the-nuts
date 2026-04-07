@@ -72,7 +72,7 @@ export function MobileHud({ gameState }: MobileHudProps) {
       {/* Expanded panel */}
       {expanded && (
         <div className="px-3 pb-3 max-h-[40vh] overflow-y-auto">
-          <HudPanel gameState={gameState} />
+          <HudPanel gameState={gameState} equity={equity} />
         </div>
       )}
     </div>

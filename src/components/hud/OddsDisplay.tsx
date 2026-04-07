@@ -21,7 +21,7 @@ export function OddsDisplay({
       <div className="flex justify-between text-[11px]">
         <span className="text-text-secondary">底池赔率</span>
         <span className="font-mono text-text-primary">
-          需 {neededPct}%
+          {potOdds.toFixed(1)}:1 · 需 {neededPct}%
         </span>
       </div>
       <div className="flex justify-between text-[11px]">
@@ -33,7 +33,7 @@ export function OddsDisplay({
           ? 'bg-green-500/20 text-green-300'
           : 'bg-red-500/20 text-red-300'
       }`}>
-        {isPositiveEV ? '+EV 可以跟注' : '-EV 考虑弃牌'}
+        {evDescription}
       </div>
     </div>
   )
