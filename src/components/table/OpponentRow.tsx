@@ -14,7 +14,7 @@ export function OpponentRow({ opponents, currentPlayerId, gamePhase, winnerIds }
   const isShowdown = gamePhase === GamePhase.Showdown
 
   return (
-    <div className="flex justify-center gap-1 sm:gap-2 flex-wrap px-2">
+    <div className="flex justify-center gap-1 sm:gap-2 px-2 py-1">
       {opponents.map(player => {
         const isActive = currentPlayerId === player.id
         const showCards = isShowdown && player.holeCards && !player.isFolded
@@ -24,12 +24,12 @@ export function OpponentRow({ opponents, currentPlayerId, gamePhase, winnerIds }
           <div
             key={player.id}
             className={`
-              flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg min-w-[56px]
+              flex flex-col items-center gap-0.5 px-1.5 sm:px-2 py-1.5 rounded-lg min-w-0
               transition-all duration-200
               ${player.isFolded && !isShowdown ? 'opacity-30' : ''}
               ${player.isFolded && isShowdown ? 'opacity-40' : ''}
-              ${isWinner ? 'ring-2 ring-yellow-400 bg-yellow-900/30 shadow-[0_0_12px_rgba(255,215,0,0.4)]' : ''}
-              ${isActive && !isWinner ? 'ring-1 ring-amber-400 bg-amber-900/30 shadow-[0_0_8px_rgba(255,215,0,0.2)]' : ''}
+              ${isWinner ? 'ring-2 ring-inset ring-yellow-400 bg-yellow-900/30 shadow-[0_0_12px_rgba(255,215,0,0.4)]' : ''}
+              ${isActive && !isWinner ? 'ring-1 ring-inset ring-amber-400 bg-amber-900/30 shadow-[0_0_8px_rgba(255,215,0,0.2)]' : ''}
             `}
           >
             {/* Position badge */}
