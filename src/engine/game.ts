@@ -3,6 +3,8 @@ import { Deck } from './deck'
 import { bestOfSeven } from './evaluator'
 import { ActionType, getAvailableActions, resolveActionAmount, type AvailableActions } from './betting'
 import { assignPositions, rotateBTN, getPreFlopOrder, getPostFlopOrder, Position } from './positions'
+import { assignRandomProfiles, type AIProfile } from './ai'
+import { shuffleArray } from './shuffle'
 
 export enum GamePhase {
   Idle = 'idle',
@@ -51,21 +53,42 @@ export interface GameState {
   positions: Map<number, Position>
   winners: { playerId: number; amount: number; hand?: string }[] | null
   actedThisRound: Set<number> // player IDs that have acted in current betting round
+  aiProfiles: Map<number, AIProfile> // 每局随机分配的 AI 性格
 }
 
 const DEFAULT_SMALL_BLIND = 10
 const DEFAULT_BIG_BLIND = 20
 const DEFAULT_STARTING_CHIPS = 1000
 
+const NPC_DATA = [
+  { name: '吉安娜', avatar: '❄️' },
+  { name: '萨尔',   avatar: '⚡' },
+  { name: '古尔丹', avatar: '🔥' },
+  { name: '雷克萨', avatar: '🐻' },
+  { name: '乌瑟尔', avatar: '🛡️' },
+]
+
 export function createInitialState(): GameState {
+  const shuffledNpcs = shuffleArray(NPC_DATA)
+
   const players: Player[] = [
     { id: 0, name: '旅行者', avatar: '🎴', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0 },
-    { id: 1, name: '吉安娜', avatar: '❄️', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0 },
-    { id: 2, name: '萨尔',   avatar: '⚡', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0 },
-    { id: 3, name: '古尔丹', avatar: '🔥', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0 },
-    { id: 4, name: '雷克萨', avatar: '🐻', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0 },
-    { id: 5, name: '乌瑟尔', avatar: '🛡️', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0 },
+    ...shuffledNpcs.map((npc, i) => ({
+      id: i + 1,
+      name: npc.name,
+      avatar: npc.avatar,
+      chips: DEFAULT_STARTING_CHIPS,
+      holeCards: null as [Card, Card] | null,
+      position: null as Position | null,
+      isFolded: false,
+      isAllIn: false,
+      currentBet: 0,
+    })),
   ]
+
+  // 随机分配 AI 性格
+  const aiPlayerIds = players.filter(p => p.id !== 0).map(p => p.id)
+  const aiProfiles = assignRandomProfiles(aiPlayerIds)
 
   return {
     phase: GamePhase.Idle,
@@ -84,6 +107,7 @@ export function createInitialState(): GameState {
     positions: new Map(),
     winners: null,
     actedThisRound: new Set(),
+    aiProfiles,
   }
 }
 

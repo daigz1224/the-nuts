@@ -27,23 +27,27 @@ export function ShowdownResult({ gameState }: ShowdownResultProps) {
   const heroFolded = hero.isFolded
 
   // Evaluate all non-folded players' hands and rank them
-  const rankings: PlayerHandResult[] = gameState.players
-    .filter(p => !p.isFolded && p.holeCards)
-    .map(p => {
-      const hand = bestOfSeven([...p.holeCards!, ...gameState.communityCards])
-      const win = winners.find(w => w.playerId === p.id)
-      return {
-        playerId: p.id,
-        name: p.name,
-        avatar: p.avatar,
-        holeCards: p.holeCards as [Card, Card],
-        hand,
-        winAmount: win?.amount ?? 0,
-        isHero: p.id === 0,
-        isFolded: false,
-      }
-    })
-    .sort((a, b) => b.hand.score - a.hand.score)
+  // Only possible when all 5 community cards have been dealt (real showdown)
+  const isRealShowdown = gameState.communityCards.length === 5
+  const rankings: PlayerHandResult[] = isRealShowdown
+    ? gameState.players
+        .filter(p => !p.isFolded && p.holeCards)
+        .map(p => {
+          const hand = bestOfSeven([...p.holeCards!, ...gameState.communityCards])
+          const win = winners.find(w => w.playerId === p.id)
+          return {
+            playerId: p.id,
+            name: p.name,
+            avatar: p.avatar,
+            holeCards: p.holeCards as [Card, Card],
+            hand,
+            winAmount: win?.amount ?? 0,
+            isHero: p.id === 0,
+            isFolded: false,
+          }
+        })
+        .sort((a, b) => b.hand.score - a.hand.score)
+    : []
 
   // Fold analysis for hero
   let foldAnalysis: { hand: HandResult; wouldHaveWon: boolean } | null = null
@@ -86,8 +90,8 @@ export function ShowdownResult({ gameState }: ShowdownResultProps) {
         </div>
       </div>
 
-      {/* Hand rankings — all contenders */}
-      <div className="bg-bg-surface/40 rounded-xl border border-amber-800/20 overflow-hidden">
+      {/* Hand rankings — all contenders (only when 5 community cards dealt) */}
+      {rankings.length > 0 && <div className="bg-bg-surface/40 rounded-xl border border-amber-800/20 overflow-hidden">
         <div className="px-3 py-1.5 border-b border-amber-800/20">
           <span className="text-[11px] font-mono text-text-muted">摊牌排名</span>
         </div>
@@ -127,7 +131,7 @@ export function ShowdownResult({ gameState }: ShowdownResultProps) {
             )
           })}
         </div>
-      </div>
+      </div>}
 
       {/* Hero fold analysis */}
       {heroFolded && foldAnalysis && (

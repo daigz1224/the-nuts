@@ -9,7 +9,7 @@ import {
   getPlayerAvailableActions,
 } from '@/engine/game'
 import { ActionType } from '@/engine/betting'
-import { getSimpleAIDecision } from '@/engine/ai'
+import { getAIDecision, type AIContext } from '@/engine/ai'
 
 const AI_DELAY_MS = 600
 
@@ -70,9 +70,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
         return
       }
 
-      // AI decision
+      // Build AI context from game state
+      const player = gameState.players[currentId]
+      const profile = gameState.aiProfiles.get(currentId)!
       const available = getPlayerAvailableActions(gameState, currentId)
-      const decision = getSimpleAIDecision(available)
+
+      const context: AIContext = {
+        holeCards: player.holeCards!,
+        communityCards: gameState.communityCards,
+        position: player.position!,
+        pot: gameState.pot,
+        bigBlind: gameState.bigBlind,
+      }
+
+      const decision = getAIDecision(profile, context, available)
 
       await new Promise(resolve => setTimeout(resolve, AI_DELAY_MS))
 
