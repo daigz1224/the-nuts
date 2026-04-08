@@ -12,6 +12,12 @@ import { ActionType } from '@/engine/betting'
 import { getAIDecision, type AIContext } from '@/engine/ai'
 
 const AI_DELAY_MS = 600
+const STORAGE_KEY = 'the-nuts-save'
+
+interface SavedData {
+  chipCounts: number[]
+  handNumber: number
+}
 
 interface GameStore {
   gameState: GameState
@@ -20,10 +26,43 @@ interface GameStore {
   startNewHand: () => void
   playerAct: (action: ActionType, amount?: number) => void
   processAITurns: () => Promise<void>
+  resetGame: () => void
+}
+
+function createStateWithSavedChips(): GameState {
+  const state = createInitialState()
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return state
+    const saved: SavedData = JSON.parse(raw)
+    if (
+      Array.isArray(saved.chipCounts) &&
+      saved.chipCounts.length === state.players.length &&
+      saved.chipCounts.every((c: unknown) => typeof c === 'number' && c >= 0)
+    ) {
+      state.players.forEach((p, i) => { p.chips = saved.chipCounts[i] })
+      state.handNumber = saved.handNumber ?? 0
+    }
+  } catch {
+    // Corrupted data — use defaults
+  }
+  return state
+}
+
+function saveChips(gameState: GameState) {
+  try {
+    const data: SavedData = {
+      chipCounts: gameState.players.map(p => p.chips),
+      handNumber: gameState.handNumber,
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+  } catch {
+    // Storage full or unavailable — silently ignore
+  }
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
-  gameState: createInitialState(),
+  gameState: createStateWithSavedChips(),
   isProcessingAI: false,
 
   startNewHand: () => {
@@ -34,14 +73,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
     get().processAITurns()
   },
 
+  resetGame: () => {
+    try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
+    set({ gameState: createInitialState(), isProcessingAI: false })
+  },
+
   playerAct: (action: ActionType, amount: number = 0) => {
     const { gameState } = get()
     const currentId = getCurrentPlayerId(gameState)
     if (currentId !== 0) return // not player's turn
 
-    set({ gameState: handleAction(gameState, 0, action, amount) })
+    const newState = handleAction(gameState, 0, action, amount)
+    set({ gameState: newState })
 
-    // After player acts, process AI turns
+    // processAITurns handles saving when the hand ends
     get().processAITurns()
   },
 
@@ -55,6 +100,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const { gameState } = get()
       if (gameState.phase === GamePhase.Showdown || gameState.phase === GamePhase.Idle) {
         set({ isProcessingAI: false })
+        saveChips(gameState)
         return
       }
 

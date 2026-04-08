@@ -54,3 +54,21 @@ html, body, #root {
   color: var(--color-text-primary);
   font-family: var(--font-sans);
 }
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Slower pulse for "your turn" glow — less distracting than default */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+.animate-pulse-slow {
+  animation: pulse-slow 2.5s ease-in-out infinite;
+}

@@ -33,14 +33,18 @@ export function calculateOuts(
   const currentResult = evaluateBest([...holeCards, ...communityCards])
   const currentScore = currentResult.score
 
-  const outs: Card[] = []
+  const outsWithScore: { card: Card; improvement: number }[] = []
 
   for (const card of remaining) {
     const newScore = evaluateBest([...holeCards, ...communityCards, card]).score
     if (newScore > currentScore) {
-      outs.push(card)
+      outsWithScore.push({ card, improvement: newScore - currentScore })
     }
   }
+
+  // 按改善幅度降序：成顺/成同花的牌排在仅提升高牌的前面
+  outsWithScore.sort((a, b) => b.improvement - a.improvement)
+  const outs = outsWithScore.map(o => o.card)
 
   const drawTypes = detectDrawTypes(holeCards, communityCards, currentResult.category)
 

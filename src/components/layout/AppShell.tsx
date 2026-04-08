@@ -1,7 +1,9 @@
+import { motion } from 'framer-motion'
 import { ControlPanel } from './ControlPanel'
 import { PokerTable } from '@/components/table/PokerTable'
 import { TopHud } from '@/components/hud/TopHud'
 import { ShowdownResult } from '@/components/table/ShowdownResult'
+import { HandHistory } from '@/components/table/HandHistory'
 import { useGameStore } from '@/store/game-store'
 import { GamePhase, getCurrentPlayerId, getPlayerAvailableActions } from '@/engine/game'
 import { Button } from '@/components/common/Button'
@@ -11,6 +13,7 @@ export function AppShell() {
   const startNewHand = useGameStore(s => s.startNewHand)
   const playerAct = useGameStore(s => s.playerAct)
   const isProcessingAI = useGameStore(s => s.isProcessingAI)
+  const resetGame = useGameStore(s => s.resetGame)
 
   const currentPlayerId = getCurrentPlayerId(gameState)
   const isPlayerTurn = currentPlayerId === 0
@@ -39,9 +42,21 @@ export function AppShell() {
               The Nuts
             </h1>
             <p className="text-sm text-text-secondary font-[--font-title]">德州扑克概率训练器</p>
-            <Button variant="call" onClick={startNewHand}>
-              开始新手牌
-            </Button>
+            {gameState.handNumber > 0 && (
+              <p className="text-xs text-text-muted font-mono">
+                第 {gameState.handNumber + 1} 手 · 筹码 {gameState.players[0].chips}
+              </p>
+            )}
+            <div className="flex gap-3">
+              <Button variant="call" onClick={startNewHand}>
+                {gameState.handNumber > 0 ? '继续下一手' : '开始新手牌'}
+              </Button>
+              {gameState.handNumber > 0 && (
+                <Button variant="neutral" onClick={resetGame}>
+                  重新开始
+                </Button>
+              )}
+            </div>
           </div>
         ) : (
           <>
@@ -49,9 +64,15 @@ export function AppShell() {
 
             {/* Showdown result — inside scroll area */}
             {isShowdown && (
-              <div className="mt-3 flex flex-col items-center gap-3 w-full max-w-[600px]">
+              <motion.div
+                className="mt-3 flex flex-col items-center gap-3 w-full max-w-[600px]"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35 }}
+              >
                 <ShowdownResult gameState={gameState} />
-              </div>
+                <HandHistory gameState={gameState} />
+              </motion.div>
             )}
           </>
         )}
@@ -73,6 +94,7 @@ export function AppShell() {
               isPlayerTurn={isPlayerTurn && !isProcessingAI}
               onAction={playerAct}
               pot={gameState.pot}
+              bigBlind={gameState.bigBlind}
             />
           )}
         </div>

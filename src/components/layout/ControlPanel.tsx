@@ -6,14 +6,15 @@ interface ControlPanelProps {
   isPlayerTurn: boolean
   onAction: (action: ActionType, amount?: number) => void
   pot?: number
+  bigBlind: number
 }
 
-export function ControlPanel({ available, isPlayerTurn, onAction, pot = 0 }: ControlPanelProps) {
+export function ControlPanel({ available, isPlayerTurn, onAction, pot = 0, bigBlind }: ControlPanelProps) {
   return (
     <div className="w-full flex-1 flex flex-col items-center justify-end px-4 pb-2">
       {isPlayerTurn && available ? (
         <div className="w-full max-w-[600px]">
-          <ActionBar available={available} onAction={onAction} pot={pot} />
+          <ActionBar available={available} onAction={onAction} pot={pot} bigBlind={bigBlind} />
         </div>
       ) : (
         <span className="text-sm text-text-muted py-2">

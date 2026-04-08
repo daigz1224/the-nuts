@@ -1,16 +1,19 @@
 import type { Player } from '@/engine/game'
 import { GamePhase } from '@/engine/game'
+import { ACTION_NAMES_ZH } from '@/engine/betting'
 import { POSITION_NAMES_ZH } from '@/engine/positions'
 import { CardFace } from '@/components/cards/CardFace'
+import { amountColorClass } from '@/components/common/bet-utils'
 
 interface OpponentRowProps {
   opponents: Player[]
   currentPlayerId: number | null
   gamePhase: GamePhase
   winnerIds?: Set<number>
+  bigBlind: number
 }
 
-export function OpponentRow({ opponents, currentPlayerId, gamePhase, winnerIds }: OpponentRowProps) {
+export function OpponentRow({ opponents, currentPlayerId, gamePhase, winnerIds, bigBlind }: OpponentRowProps) {
   const isShowdown = gamePhase === GamePhase.Showdown
 
   return (
@@ -57,15 +60,25 @@ export function OpponentRow({ opponents, currentPlayerId, gamePhase, winnerIds }
               {player.chips.toLocaleString()}
             </span>
 
-            {/* Bet or status */}
-            {player.isAllIn && (
-              <span className="text-[8px] font-bold text-action-raise">全下</span>
-            )}
-            {player.currentBet > 0 && !player.isAllIn && (
-              <span className="text-[8px] font-mono text-pot">
-                {player.currentBet}
-              </span>
-            )}
+            {/* Last action / bet status */}
+            <span className="text-[8px] font-mono h-3 flex items-center">
+              {player.isFolded ? (
+                <span className="text-red-400/70">已弃牌</span>
+              ) : player.isAllIn ? (
+                <span className="font-bold text-action-raise">全下</span>
+              ) : player.lastAction && !isShowdown ? (
+                <span className="text-text-muted">
+                  {ACTION_NAMES_ZH[player.lastAction.type]}
+                  {player.lastAction.amount > 0 && (
+                    <span className={`ml-0.5 ${amountColorClass(player.lastAction.amount, bigBlind)}`}>
+                      {player.lastAction.amount}
+                    </span>
+                  )}
+                </span>
+              ) : player.currentBet > 0 ? (
+                <span className={amountColorClass(player.currentBet, bigBlind)}>{player.currentBet}</span>
+              ) : null}
+            </span>
           </div>
         )
       })}

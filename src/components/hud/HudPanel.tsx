@@ -160,17 +160,12 @@ function TierPill({ tier, label }: { tier: number; label: string }) {
   )
 }
 
-const SUIT_ORDER: Record<string, number> = { s: 0, h: 1, d: 2, c: 3 }
 const MAX_OUTS_SHOWN = 16
 
 function OutsCards({ outs }: { outs: Card[] }) {
-  const sorted = [...outs].sort((a, b) => {
-    if (b.rank !== a.rank) return b.rank - a.rank
-    return SUIT_ORDER[a.suit] - SUIT_ORDER[b.suit]
-  })
-
-  const shown = sorted.slice(0, MAX_OUTS_SHOWN)
-  const overflow = sorted.length - MAX_OUTS_SHOWN
+  // outs 已按改善幅度降序排列（引擎层排序），直接使用
+  const shown = outs.slice(0, MAX_OUTS_SHOWN)
+  const overflow = outs.length - MAX_OUTS_SHOWN
 
   return (
     <div className="flex items-center gap-0.5 mt-0.5 overflow-hidden">

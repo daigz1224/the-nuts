@@ -1,14 +1,18 @@
+import { motion, AnimatePresence } from 'framer-motion'
 import type { Player } from '@/engine/game'
 import { POSITION_NAMES_ZH } from '@/engine/positions'
 import { CardFace } from '@/components/cards/CardFace'
+import { ACTION_NAMES_ZH } from '@/engine/betting'
+import { amountColorClass } from '@/components/common/bet-utils'
 
 interface HeroAreaProps {
   player: Player
   isCurrentTurn: boolean
   isWinner?: boolean
+  bigBlind: number
 }
 
-export function HeroArea({ player, isCurrentTurn, isWinner = false }: HeroAreaProps) {
+export function HeroArea({ player, isCurrentTurn, isWinner = false, bigBlind }: HeroAreaProps) {
   return (
     <div
       className={`
@@ -32,14 +36,30 @@ export function HeroArea({ player, isCurrentTurn, isWinner = false }: HeroAreaPr
 
       {/* Hole cards — large with breathing room, greyed out if folded */}
       <div className={`flex gap-2 sm:gap-3 py-0.5 sm:py-1 ${player.isFolded ? 'grayscale opacity-40' : ''}`}>
-        {player.holeCards ? (
-          <>
-            <CardFace card={player.holeCards[0]} size="sm" className="sm:!w-[52px] sm:!h-[72px] sm:!text-lg" />
-            <CardFace card={player.holeCards[1]} size="sm" className="sm:!w-[52px] sm:!h-[72px] sm:!text-lg" />
-          </>
-        ) : (
-          <div className="h-[56px] sm:h-[72px]" />
-        )}
+        <AnimatePresence mode="popLayout">
+          {player.holeCards ? (
+            <>
+              <motion.div
+                key="card-0"
+                initial={{ opacity: 0, x: -30, rotateY: 90 }}
+                animate={{ opacity: 1, x: 0, rotateY: 0 }}
+                transition={{ duration: 0.35, delay: 0 }}
+              >
+                <CardFace card={player.holeCards[0]} size="sm" className="sm:!w-[52px] sm:!h-[72px] sm:!text-lg" />
+              </motion.div>
+              <motion.div
+                key="card-1"
+                initial={{ opacity: 0, x: -30, rotateY: 90 }}
+                animate={{ opacity: 1, x: 0, rotateY: 0 }}
+                transition={{ duration: 0.35, delay: 0.15 }}
+              >
+                <CardFace card={player.holeCards[1]} size="sm" className="sm:!w-[52px] sm:!h-[72px] sm:!text-lg" />
+              </motion.div>
+            </>
+          ) : (
+            <div className="h-[56px] sm:h-[72px]" />
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Folded label */}
@@ -53,9 +73,20 @@ export function HeroArea({ player, isCurrentTurn, isWinner = false }: HeroAreaPr
         <span className="text-sm font-mono text-chip">{player.chips.toLocaleString()}</span>
       </div>
 
-      {/* Current bet — always reserve height to prevent layout shifts */}
-      <span className={`text-xs font-mono ${player.currentBet > 0 ? 'text-pot' : 'text-transparent'}`}>
-        {player.currentBet > 0 ? `下注: ${player.currentBet}` : '\u00A0'}
+      {/* Last action / current bet — always reserve height */}
+      <span className="text-xs font-mono h-4 flex items-center">
+        {player.lastAction ? (
+          <span className="text-text-secondary">
+            {ACTION_NAMES_ZH[player.lastAction.type]}
+            {player.lastAction.amount > 0 && (
+              <span className={`ml-1 ${amountColorClass(player.lastAction.amount, bigBlind)}`}>{player.lastAction.amount}</span>
+            )}
+          </span>
+        ) : player.currentBet > 0 ? (
+          <span className={amountColorClass(player.currentBet, bigBlind)}>下注: {player.currentBet}</span>
+        ) : (
+          <span className="text-transparent">{'\u00A0'}</span>
+        )}
       </span>
     </div>
   )

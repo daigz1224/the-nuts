@@ -13,10 +13,17 @@ import { shuffleArray } from './shuffle'
 
 export enum AIStyle {
   Rock = 'rock',             // 紧-被动（岩石）
-  TAG = 'tag',               // 紧-激进（鲨鱼）
+  TAG = 'tag',               // 紧-激进
   LAG = 'lag',               // 松-激进
   CallingStation = 'calling-station', // 松-被动（跟注站）
   Maniac = 'maniac',         // 疯狂型
+  Nit = 'nit',               // 超紧型（铁公鸡）
+  Shark = 'shark',           // 平衡高手（鲨鱼）
+  Bully = 'bully',           // 压迫型（恶霸）
+  SemiBluffer = 'semi-bluffer', // 半诈唬型
+  TightPassive = 'tight-passive', // 紧被动
+  LoosePassive = 'loose-passive', // 松被动
+  Gambler = 'gambler',       // 赌徒型
 }
 
 export interface AIProfile {
@@ -50,18 +57,22 @@ export interface AIDecision {
 // Character profiles — 每个 NPC 有固定风格
 // ---------------------------------------------------------------------------
 
-/** 性格模板池 — 每局随机分配给 NPC */
+/** 性格模板池 — 每局随机分配给 NPC（12 种风格） */
 export const PROFILE_POOL: AIProfile[] = [
-  // 紧凶型 (TAG)
-  { style: AIStyle.TAG, vpip: 0.23, pfr: 0.70, aggression: 0.60, bluffFreq: 0.15, foldToBet: 0.55 },
-  // 岩石型 (Rock)
-  { style: AIStyle.Rock, vpip: 0.16, pfr: 0.55, aggression: 0.35, bluffFreq: 0.05, foldToBet: 0.65 },
-  // 疯狂型 (Maniac)
-  { style: AIStyle.Maniac, vpip: 0.52, pfr: 0.55, aggression: 0.75, bluffFreq: 0.35, foldToBet: 0.15 },
-  // 跟注站 (Calling Station)
-  { style: AIStyle.CallingStation, vpip: 0.42, pfr: 0.12, aggression: 0.15, bluffFreq: 0.05, foldToBet: 0.12 },
-  // 松激进型 (LAG)
-  { style: AIStyle.LAG, vpip: 0.30, pfr: 0.65, aggression: 0.55, bluffFreq: 0.20, foldToBet: 0.40 },
+  // ── 原有 5 种 ──
+  { style: AIStyle.TAG,            vpip: 0.23, pfr: 0.70, aggression: 0.60, bluffFreq: 0.15, foldToBet: 0.45 }, // 紧凶
+  { style: AIStyle.Rock,           vpip: 0.16, pfr: 0.55, aggression: 0.35, bluffFreq: 0.05, foldToBet: 0.55 }, // 岩石
+  { style: AIStyle.Maniac,         vpip: 0.52, pfr: 0.55, aggression: 0.75, bluffFreq: 0.35, foldToBet: 0.10 }, // 疯狂
+  { style: AIStyle.CallingStation, vpip: 0.42, pfr: 0.12, aggression: 0.15, bluffFreq: 0.05, foldToBet: 0.08 }, // 跟注站
+  { style: AIStyle.LAG,            vpip: 0.30, pfr: 0.65, aggression: 0.55, bluffFreq: 0.20, foldToBet: 0.32 }, // 松凶
+  // ── 新增 7 种 ──
+  { style: AIStyle.Nit,            vpip: 0.12, pfr: 0.45, aggression: 0.25, bluffFreq: 0.02, foldToBet: 0.65 }, // 超紧，只玩超强牌
+  { style: AIStyle.Shark,          vpip: 0.26, pfr: 0.72, aggression: 0.65, bluffFreq: 0.18, foldToBet: 0.40 }, // 平衡高手
+  { style: AIStyle.Bully,          vpip: 0.35, pfr: 0.60, aggression: 0.70, bluffFreq: 0.25, foldToBet: 0.22 }, // 压迫型
+  { style: AIStyle.SemiBluffer,    vpip: 0.28, pfr: 0.50, aggression: 0.45, bluffFreq: 0.30, foldToBet: 0.28 }, // 半诈唬型
+  { style: AIStyle.TightPassive,   vpip: 0.18, pfr: 0.30, aggression: 0.20, bluffFreq: 0.03, foldToBet: 0.50 }, // 紧被动
+  { style: AIStyle.LoosePassive,   vpip: 0.45, pfr: 0.15, aggression: 0.20, bluffFreq: 0.08, foldToBet: 0.15 }, // 松被动
+  { style: AIStyle.Gambler,        vpip: 0.48, pfr: 0.45, aggression: 0.50, bluffFreq: 0.28, foldToBet: 0.20 }, // 赌徒
 ]
 
 /** 为一组 AI 玩家随机分配性格 */
@@ -89,6 +100,16 @@ const POSITION_MODIFIERS: Record<Position, number> = {
 
 function getPositionModifier(position: Position): number {
   return POSITION_MODIFIERS[position] ?? 1.0
+}
+
+/** 翻后弃牌位置折扣 — 后位更不愿意弃牌 */
+const POSITION_FOLD_MODIFIERS: Record<Position, number> = {
+  [Position.UTG]: 1.10,  // 前位更容易弃
+  [Position.MP]: 1.00,   // 基准
+  [Position.CO]: 0.85,   // 位置好，少弃牌
+  [Position.BTN]: 0.75,  // 最佳位置，最抗弃牌
+  [Position.SB]: 1.05,   // 翻后位置差
+  [Position.BB]: 0.90,   // 已投入盲注，稍抗弃
 }
 
 // ---------------------------------------------------------------------------
@@ -374,8 +395,8 @@ function postFlopDecision(
 
   const betPressure = available.callAmount / Math.max(context.pot, 1)
 
-  // 强牌：加注或跟注
-  if (strength > 0.55) {
+  // 强牌：加注或跟注（门槛 0.45，覆盖两对、强顶对等中上牌力）
+  if (strength > 0.45) {
     if (Math.random() < profile.aggression && available.canRaise) {
       return {
         action: ActionType.Raise,
@@ -386,8 +407,11 @@ function postFlopDecision(
   }
 
   // 中等及弱牌：根据 foldToBet 性格决定是否弃牌
-  // foldToBet 越低越不容易弃牌 (CallingStation=0.12, Rock=0.65)
-  const foldProb = profile.foldToBet * (1 - strength) * (0.5 + betPressure)
+  // 底池赔率折扣：底池越大，跟注相对越便宜，越不该弃
+  const potOddsDiscount = 1 - available.callAmount / (context.pot + available.callAmount + 1)
+  // 位置折扣：后位（BTN/CO）更不愿意弃牌
+  const posFoldMod = POSITION_FOLD_MODIFIERS[context.position] ?? 1.0
+  const foldProb = profile.foldToBet * (1 - strength) * (0.5 + betPressure) * potOddsDiscount * posFoldMod
 
   if (Math.random() < foldProb) {
     // 偶尔诈唬加注代替弃牌

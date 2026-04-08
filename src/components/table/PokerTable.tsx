@@ -26,6 +26,7 @@ export function PokerTable({ gameState, currentPlayerId }: PokerTableProps) {
         currentPlayerId={currentPlayerId}
         gamePhase={gameState.phase}
         winnerIds={winnerIds}
+        bigBlind={gameState.bigBlind}
       />
 
       {/* Board area — pot + community cards */}
@@ -39,6 +40,7 @@ export function PokerTable({ gameState, currentPlayerId }: PokerTableProps) {
         player={hero}
         isCurrentTurn={currentPlayerId === 0}
         isWinner={winnerIds?.has(0)}
+        bigBlind={gameState.bigBlind}
       />
     </div>
   )

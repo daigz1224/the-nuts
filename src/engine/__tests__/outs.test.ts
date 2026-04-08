@@ -43,6 +43,25 @@ describe('calculateOuts', () => {
     expect(result.drawTypes).not.toContain('两头顺听牌')
   })
 
+  it('sorts outs by improvement — straight-completing 9 before high cards', () => {
+    // 7h 8c vs 3h Jc Td → a 9 makes 7-8-9-T-J straight
+    const community = cards('3h', 'Jc', 'Td')
+    const result = calculateOuts(hole('7h', '8c'), community)
+
+    expect(result.drawTypes).toContain('卡顺听牌')
+
+    // Find the 9s — they should be near the front (straight = huge improvement)
+    const firstNineIndex = result.outs.findIndex(c => c.rank === 9)
+    expect(firstNineIndex).toBeGreaterThanOrEqual(0) // 9 is an out
+    expect(firstNineIndex).toBeLessThan(8) // should be in first 8 outs, not buried at the end
+
+    // Also verify high-card-only improvements (like A or K) come after straight outs
+    const firstAceIndex = result.outs.findIndex(c => c.rank === 14)
+    if (firstAceIndex >= 0 && firstNineIndex >= 0) {
+      expect(firstNineIndex).toBeLessThan(firstAceIndex)
+    }
+  })
+
   it('returns improveProb as ratio of outs to remaining cards', () => {
     const community = cards('3h', '7h', '2c')
     const result = calculateOuts(hole('Ah', 'Kh'), community)

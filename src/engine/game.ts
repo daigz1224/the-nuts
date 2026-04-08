@@ -34,7 +34,13 @@ export interface Player {
   isFolded: boolean
   isAllIn: boolean
   currentBet: number // bet in current betting round
+  lastAction: { type: ActionType; amount: number } | null
 }
+
+export type HandHistoryEntry =
+  | { type: 'action'; playerId: number; action: ActionType; amount: number; phase: GamePhase }
+  | { type: 'phase'; phase: GamePhase; communityCards: Card[] }
+  | { type: 'result'; winners: { playerId: number; amount: number }[] }
 
 export interface GameState {
   phase: GamePhase
@@ -54,6 +60,7 @@ export interface GameState {
   winners: { playerId: number; amount: number; hand?: string }[] | null
   actedThisRound: Set<number> // player IDs that have acted in current betting round
   aiProfiles: Map<number, AIProfile> // 每局随机分配的 AI 性格
+  handHistory: HandHistoryEntry[]
 }
 
 const DEFAULT_SMALL_BLIND = 10
@@ -72,7 +79,7 @@ export function createInitialState(): GameState {
   const shuffledNpcs = shuffleArray(NPC_DATA)
 
   const players: Player[] = [
-    { id: 0, name: '旅行者', avatar: '🎴', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0 },
+    { id: 0, name: '旅行者', avatar: '🎴', chips: DEFAULT_STARTING_CHIPS, holeCards: null, position: null, isFolded: false, isAllIn: false, currentBet: 0, lastAction: null },
     ...shuffledNpcs.map((npc, i) => ({
       id: i + 1,
       name: npc.name,
@@ -83,6 +90,7 @@ export function createInitialState(): GameState {
       isFolded: false,
       isAllIn: false,
       currentBet: 0,
+      lastAction: null,
     })),
   ]
 
@@ -108,6 +116,7 @@ export function createInitialState(): GameState {
     winners: null,
     actedThisRound: new Set(),
     aiProfiles,
+    handHistory: [],
   }
 }
 
@@ -134,6 +143,7 @@ export function startNewHand(state: GameState): GameState {
     isFolded: !activeSeats.includes(p.id),
     isAllIn: false,
     currentBet: 0,
+    lastAction: null,
   }))
 
   // Create and shuffle deck
@@ -187,6 +197,7 @@ export function startNewHand(state: GameState): GameState {
     positions,
     winners: null,
     actedThisRound: new Set(),
+    handHistory: [],
   }
 }
 
@@ -226,6 +237,7 @@ export function handleAction(
 
   player.chips -= chipsSpent
   player.currentBet = newBet
+  player.lastAction = { type: action, amount: chipsSpent }
 
   let { pot, currentBet, minRaise } = state
   pot += chipsSpent
@@ -252,6 +264,15 @@ export function handleAction(
   const actedThisRound = new Set(state.actedThisRound)
   actedThisRound.add(playerId)
 
+  // Record action in hand history
+  const handHistory = [...state.handHistory, {
+    type: 'action' as const,
+    playerId,
+    action,
+    amount: chipsSpent,
+    phase: state.phase,
+  }]
+
   let newState: GameState = {
     ...state,
     players,
@@ -260,6 +281,7 @@ export function handleAction(
     minRaise,
     actedThisRound,
     activePlayerIndex: state.activePlayerIndex + 1,
+    handHistory,
   }
 
   // Check if only one player remains
@@ -341,7 +363,7 @@ function skipInactivePlayers(state: GameState): GameState {
 
 function advancePhase(state: GameState): GameState {
   // Reset betting state for new street
-  const players = state.players.map(p => ({ ...p, currentBet: 0 }))
+  const players = state.players.map(p => ({ ...p, currentBet: 0, lastAction: null }))
   const { deck } = state
   const communityCards = [...state.communityCards]
 
@@ -372,6 +394,13 @@ function advancePhase(state: GameState): GameState {
   const actionOrder = getPostFlopOrder(state.positions)
     .filter(id => !players[id].isFolded && !players[id].isAllIn)
 
+  // Record phase change in history
+  const handHistory = [...state.handHistory, {
+    type: 'phase' as const,
+    phase,
+    communityCards: [...communityCards],
+  }]
+
   return {
     ...state,
     phase,
@@ -383,6 +412,7 @@ function advancePhase(state: GameState): GameState {
     activePlayerIndex: 0,
     actionOrder,
     actedThisRound: new Set(),
+    handHistory,
   }
 }
 
@@ -441,12 +471,19 @@ function resolveShowdown(state: GameState): GameState {
     })
   })
 
+  // Record result in history
+  const handHistory = [...state.handHistory, {
+    type: 'result' as const,
+    winners: winners.map(w => ({ playerId: w.playerId, amount: w.amount })),
+  }]
+
   return {
     ...state,
     phase: GamePhase.Showdown,
     players,
     pot: 0,
     winners,
+    handHistory,
   }
 }
 
@@ -457,11 +494,18 @@ function awardPotToLastPlayer(state: GameState, playerId: number): GameState {
     chips: players[playerId].chips + state.pot,
   }
 
+  // Record result in history
+  const handHistory = [...state.handHistory, {
+    type: 'result' as const,
+    winners: [{ playerId, amount: state.pot }],
+  }]
+
   return {
     ...state,
     phase: GamePhase.Showdown,
     players,
     pot: 0,
     winners: [{ playerId, amount: state.pot }],
+    handHistory,
   }
 }
