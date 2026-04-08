@@ -4,8 +4,10 @@ import { PokerTable } from '@/components/table/PokerTable'
 import { TopHud } from '@/components/hud/TopHud'
 import { ShowdownResult } from '@/components/table/ShowdownResult'
 import { HandHistory } from '@/components/table/HandHistory'
+import { EliminationBanner } from '@/components/table/EliminationBanner'
+import { TournamentEndScreen } from '@/components/table/TournamentEndScreen'
 import { useGameStore } from '@/store/game-store'
-import { GamePhase, getCurrentPlayerId, getPlayerAvailableActions } from '@/engine/game'
+import { GamePhase, getCurrentPlayerId, getPlayerAvailableActions, getTournamentResult, getBlindsForHand } from '@/engine/game'
 import { Button } from '@/components/common/Button'
 
 export function AppShell() {
@@ -14,6 +16,7 @@ export function AppShell() {
   const playerAct = useGameStore(s => s.playerAct)
   const isProcessingAI = useGameStore(s => s.isProcessingAI)
   const resetGame = useGameStore(s => s.resetGame)
+  const eliminatedThisHand = useGameStore(s => s.eliminatedThisHand)
 
   const currentPlayerId = getCurrentPlayerId(gameState)
   const isPlayerTurn = currentPlayerId === 0
@@ -21,6 +24,8 @@ export function AppShell() {
 
   const isIdle = gameState.phase === GamePhase.Idle
   const isShowdown = gameState.phase === GamePhase.Showdown
+  const tournamentResult = getTournamentResult(gameState.players)
+  const nextBlinds = getBlindsForHand(gameState.handNumber + 1)
 
   return (
     <div className="relative flex flex-col h-dvh overflow-hidden bg-bg-primary">
@@ -37,27 +42,35 @@ export function AppShell() {
       <div className={`flex-1 flex flex-col items-center px-2 sm:px-4 relative min-h-0 overflow-y-auto
                        ${isIdle ? 'justify-center p-2 sm:p-4' : 'justify-start pb-2'}`}>
         {isIdle ? (
-          <div className="flex flex-col items-center gap-4">
-            <h1 className="text-3xl font-bold text-text-accent font-[--font-title] drop-shadow-[0_2px_4px_rgba(255,215,0,0.3)]">
-              The Nuts
-            </h1>
-            <p className="text-sm text-text-secondary font-[--font-title]">德州扑克概率训练器</p>
-            {gameState.handNumber > 0 && (
-              <p className="text-xs text-text-muted font-mono">
-                第 {gameState.handNumber + 1} 手 · 筹码 {gameState.players[0].chips}
-              </p>
-            )}
-            <div className="flex gap-3">
-              <Button variant="call" onClick={startNewHand}>
-                {gameState.handNumber > 0 ? '继续下一手' : '开始新手牌'}
-              </Button>
+          tournamentResult !== 'playing' && gameState.handNumber > 0 ? (
+            <TournamentEndScreen
+              result={tournamentResult}
+              handNumber={gameState.handNumber}
+              onReset={resetGame}
+            />
+          ) : (
+            <div className="flex flex-col items-center gap-4">
+              <h1 className="text-3xl font-bold text-text-accent font-[--font-title] drop-shadow-[0_2px_4px_rgba(255,215,0,0.3)]">
+                The Nuts
+              </h1>
+              <p className="text-sm text-text-secondary font-[--font-title]">德州扑克概率训练器</p>
               {gameState.handNumber > 0 && (
-                <Button variant="neutral" onClick={resetGame}>
-                  重新开始
-                </Button>
+                <p className="text-xs text-text-muted font-mono">
+                  第 {gameState.handNumber + 1} 手 · 筹码 {gameState.players[0].chips} · 盲注 {nextBlinds.smallBlind}/{nextBlinds.bigBlind}
+                </p>
               )}
+              <div className="flex gap-3">
+                <Button variant="call" onClick={startNewHand}>
+                  {gameState.handNumber > 0 ? '继续下一手' : '开始新手牌'}
+                </Button>
+                {gameState.handNumber > 0 && (
+                  <Button variant="neutral" onClick={resetGame}>
+                    重新开始
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
+          )
         ) : (
           <>
             <PokerTable gameState={gameState} currentPlayerId={currentPlayerId} />
@@ -71,6 +84,7 @@ export function AppShell() {
                 transition={{ duration: 0.35 }}
               >
                 <ShowdownResult gameState={gameState} />
+                <EliminationBanner eliminatedIds={eliminatedThisHand} players={gameState.players} />
                 <HandHistory gameState={gameState} />
               </motion.div>
             )}

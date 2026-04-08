@@ -22,14 +22,14 @@ const sizeClasses = {
 }
 
 const rankSizeClasses = {
-  xxs: 'text-[8px]',
+  xxs: 'text-5xs',
   xs: 'text-xs',
   sm: 'text-base',
   md: 'text-lg',
 }
 
 const suitSizeClasses = {
-  xxs: 'text-[9px]',
+  xxs: 'text-4xs',
   xs: 'text-sm',
   sm: 'text-lg',
   md: 'text-2xl',

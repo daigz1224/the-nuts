@@ -37,13 +37,13 @@ export function OpponentRow({ opponents, currentPlayerId, gamePhase, winnerIds, 
           >
             {/* Position badge */}
             {player.position && (
-              <span className="text-[8px] font-mono text-text-muted">
+              <span className="text-5xs font-mono text-text-muted">
                 {POSITION_NAMES_ZH[player.position]}
               </span>
             )}
 
             {/* Name */}
-            <span className={`text-[11px] font-medium truncate max-w-[60px] ${isWinner ? 'text-yellow-300' : 'text-text-primary'}`}>
+            <span className={`text-2xs font-medium truncate max-w-[60px] ${isWinner ? 'text-yellow-300' : 'text-text-primary'}`}>
               {isWinner ? '👑' : player.avatar} {player.name}
             </span>
 
@@ -56,12 +56,12 @@ export function OpponentRow({ opponents, currentPlayerId, gamePhase, winnerIds, 
             )}
 
             {/* Chips */}
-            <span className="text-[10px] font-mono text-chip">
+            <span className="text-3xs font-mono text-chip">
               {player.chips.toLocaleString()}
             </span>
 
             {/* Last action / bet status */}
-            <span className="text-[8px] font-mono h-3 flex items-center">
+            <span className="text-5xs font-mono h-3 flex items-center">
               {player.isFolded ? (
                 <span className="text-red-400/70">已弃牌</span>
               ) : player.isAllIn ? (

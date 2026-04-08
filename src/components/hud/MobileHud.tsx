@@ -64,7 +64,7 @@ export function MobileHud({ gameState }: MobileHudProps) {
             </span>
           )}
         </div>
-        <span className="text-text-muted text-[10px]">
+        <span className="text-text-muted text-3xs">
           {expanded ? '收起 ▼' : '详情 ▲'}
         </span>
       </button>

@@ -29,7 +29,7 @@ export function HeroArea({ player, isCurrentTurn, isWinner = false, bigBlind }: 
     >
       {/* Position badge */}
       {player.position && (
-        <span className="text-[10px] font-mono text-text-secondary bg-bg-surface/60 px-2.5 py-0.5 rounded-full">
+        <span className="text-3xs font-mono text-text-secondary bg-bg-surface/60 px-2.5 py-0.5 rounded-full">
           {POSITION_NAMES_ZH[player.position]}
         </span>
       )}
@@ -64,7 +64,7 @@ export function HeroArea({ player, isCurrentTurn, isWinner = false, bigBlind }: 
 
       {/* Folded label */}
       {player.isFolded && (
-        <span className="text-[10px] text-red-400/70 font-mono">已弃牌</span>
+        <span className="text-3xs text-red-400/70 font-mono">已弃牌</span>
       )}
 
       {/* Name + chips */}

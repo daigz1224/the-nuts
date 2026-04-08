@@ -60,7 +60,7 @@ export function BetSlider({ min, max, pot, onConfirm, onCancel }: BetSliderProps
               key={p.label}
               onClick={() => setValue(p.value)}
               className={`
-                text-[11px] px-2.5 py-1 rounded-full cursor-pointer
+                text-2xs px-2.5 py-1 rounded-full cursor-pointer
                 border transition-colors
                 ${value === p.value
                   ? 'bg-amber-600 text-white border-amber-500'

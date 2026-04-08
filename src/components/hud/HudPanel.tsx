@@ -60,7 +60,7 @@ export function HudPanel({ gameState, equity, isCalculating = false }: HudPanelP
         <Row>
           <span className="font-mono font-bold text-text-accent">{handStrength.handName}</span>
           <TierPill tier={handStrength.tier} label={handStrength.tierLabel} />
-          <span className="text-text-muted ml-auto text-[10px] truncate max-w-[45%] text-right">{handStrength.positionAdvice}</span>
+          <span className="text-text-muted ml-auto text-3xs truncate max-w-[45%] text-right">{handStrength.positionAdvice}</span>
         </Row>
       )}
 
@@ -73,7 +73,7 @@ export function HudPanel({ gameState, equity, isCalculating = false }: HudPanelP
 
       {/* Row 2: Equity bar — compact inline */}
       <div className="flex items-center gap-2 mb-0.5">
-          <span className="text-[10px] text-text-muted w-6 shrink-0">胜率</span>
+          <span className="text-3xs text-text-muted w-6 shrink-0">胜率</span>
           <div className="flex-1 h-1.5 bg-bg-card rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-500 ${barColor}`}
@@ -81,9 +81,9 @@ export function HudPanel({ gameState, equity, isCalculating = false }: HudPanelP
             />
           </div>
           {isCalculating ? (
-            <span className="text-[10px] text-text-muted w-16 text-right">计算中…</span>
+            <span className="text-3xs text-text-muted w-16 text-right">计算中…</span>
           ) : winPct !== null ? (
-            <span className="font-mono font-bold text-[11px] text-text-accent w-16 text-right">
+            <span className="font-mono font-bold text-2xs text-text-accent w-16 text-right">
               {winPct}%{tiePct && tiePct > 0 ? <span className="text-text-muted"> +{tiePct}%</span> : ''}
             </span>
           ) : null}
@@ -92,16 +92,16 @@ export function HudPanel({ gameState, equity, isCalculating = false }: HudPanelP
       {/* Row 3: Pot odds — single line */}
       {potOdds && (
         <Row className={potOdds.isPositiveEV ? 'bg-green-500/10 rounded px-1.5 -mx-1.5' : 'bg-red-500/10 rounded px-1.5 -mx-1.5'}>
-          <span className={`text-[11px] font-bold ${potOdds.isPositiveEV ? 'text-green-400' : 'text-red-400'}`}>
+          <span className={`text-2xs font-bold ${potOdds.isPositiveEV ? 'text-green-400' : 'text-red-400'}`}>
             {potOdds.isPositiveEV ? '+EV' : '-EV'}
           </span>
-          <span className="text-[10px] text-text-secondary">
+          <span className="text-3xs text-text-secondary">
             赔率 {(1 / potOdds.potOdds - 1).toFixed(1)}:1
           </span>
-          <span className="text-[10px] text-text-muted ml-auto">
+          <span className="text-3xs text-text-muted ml-auto">
             需 {Math.round(potOdds.neededWinRate * 100)}% / 有 {Math.round(equity!.equity * 100)}%
           </span>
-          <span className={`text-[10px] font-mono ${potOdds.ev >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+          <span className={`text-3xs font-mono ${potOdds.ev >= 0 ? 'text-green-400' : 'text-red-400'}`}>
             {potOdds.ev >= 0 ? '+' : ''}{potOdds.ev.toFixed(0)}
           </span>
         </Row>
@@ -111,11 +111,11 @@ export function HudPanel({ gameState, equity, isCalculating = false }: HudPanelP
       {outs && outs.outsCount > 0 && (
         <div>
           <Row>
-            <span className="text-[10px] text-text-muted">Outs</span>
-            <span className="font-mono font-bold text-[11px] text-text-accent">{outs.outsCount}张</span>
-            <span className="text-[10px] text-text-muted">≈{Math.round(outs.improveProb * 100)}%</span>
+            <span className="text-3xs text-text-muted">Outs</span>
+            <span className="font-mono font-bold text-2xs text-text-accent">{outs.outsCount}张</span>
+            <span className="text-3xs text-text-muted">≈{Math.round(outs.improveProb * 100)}%</span>
             {outs.drawTypes.length > 0 && (
-              <span className="text-[10px] text-text-secondary ml-auto truncate max-w-[40%] text-right">
+              <span className="text-3xs text-text-secondary ml-auto truncate max-w-[40%] text-right">
                 {outs.drawTypes.join(' · ')}
               </span>
             )}
@@ -128,7 +128,7 @@ export function HudPanel({ gameState, equity, isCalculating = false }: HudPanelP
       {phase === GamePhase.Showdown && currentHand && (
         <Row>
           <span className="font-bold text-text-accent">{currentHand.description}</span>
-          <span className="text-text-muted ml-auto text-[10px]">详见下方结算</span>
+          <span className="text-text-muted ml-auto text-3xs">详见下方结算</span>
         </Row>
       )}
     </div>
@@ -138,7 +138,7 @@ export function HudPanel({ gameState, equity, isCalculating = false }: HudPanelP
 /** Generic compact row */
 function Row({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`flex items-center gap-1.5 py-0.5 text-[11px] ${className}`}>
+    <div className={`flex items-center gap-1.5 py-0.5 text-2xs ${className}`}>
       {children}
     </div>
   )
@@ -154,7 +154,7 @@ const TIER_COLORS: Record<number, string> = {
 
 function TierPill({ tier, label }: { tier: number; label: string }) {
   return (
-    <span className={`text-[9px] px-1.5 py-px rounded-full font-medium ${TIER_COLORS[tier] || TIER_COLORS[5]}`}>
+    <span className={`text-4xs px-1.5 py-px rounded-full font-medium ${TIER_COLORS[tier] || TIER_COLORS[5]}`}>
       {label}
     </span>
   )
@@ -173,7 +173,7 @@ function OutsCards({ outs }: { outs: Card[] }) {
         <CardFace key={i} card={card} size="xxs" />
       ))}
       {overflow > 0 && (
-        <span className="text-[9px] text-text-muted shrink-0 ml-0.5">+{overflow}</span>
+        <span className="text-4xs text-text-muted shrink-0 ml-0.5">+{overflow}</span>
       )}
     </div>
   )
@@ -181,9 +181,9 @@ function OutsCards({ outs }: { outs: Card[] }) {
 
 function IdleHud() {
   return (
-    <div className="text-[11px] text-text-muted space-y-1">
+    <div className="text-2xs text-text-muted space-y-1">
       <p>开始游戏后显示实时概率数据。</p>
-      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-text-secondary">
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-3xs text-text-secondary">
         <span>胜率</span>
         <span>Outs</span>
         <span>底池赔率</span>

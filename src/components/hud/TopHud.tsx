@@ -50,13 +50,14 @@ export function TopHud({ gameState, isProcessingAI = false }: TopHudProps) {
           className="w-full flex items-center gap-2 px-3 py-1 cursor-pointer
                      hover:bg-bg-surface/30 transition-colors"
         >
-          <span className="text-[10px] font-mono text-text-muted shrink-0">
+          <span className="text-3xs font-mono text-text-muted shrink-0">
             {handInfo}{handInfo && phaseLabel ? ' · ' : ''}{phaseLabel}
+            {handInfo && ` · 盲注 ${gameState.smallBlind}/${gameState.bigBlind}`}
           </span>
           {isProcessingAI && (
-            <span className="text-[10px] text-text-muted animate-pulse">思考中…</span>
+            <span className="text-3xs text-text-muted animate-pulse">思考中…</span>
           )}
-          <span className="ml-auto text-[10px] text-text-muted shrink-0">
+          <span className="ml-auto text-3xs text-text-muted shrink-0">
             {collapsed ? '▼ 概率' : '▲ 收起'}
           </span>
         </button>

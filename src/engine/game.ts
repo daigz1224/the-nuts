@@ -67,6 +67,41 @@ const DEFAULT_SMALL_BLIND = 10
 const DEFAULT_BIG_BLIND = 20
 const DEFAULT_STARTING_CHIPS = 1000
 
+// ---------------------------------------------------------------------------
+// 涨盲机制 — 从 handNumber 派生盲注，无需额外状态
+// ---------------------------------------------------------------------------
+
+const BLIND_SCHEDULE = [
+  { upToHand: 6,  sb: 10, bb: 20 },
+  { upToHand: 12, sb: 15, bb: 30 },
+  { upToHand: 18, sb: 20, bb: 40 },
+  { upToHand: 24, sb: 30, bb: 60 },
+  { upToHand: 30, sb: 50, bb: 100 },
+]
+const MAX_BLINDS = { sb: 75, bb: 150 }
+
+export function getBlindsForHand(handNumber: number): { smallBlind: number; bigBlind: number } {
+  for (const level of BLIND_SCHEDULE) {
+    if (handNumber <= level.upToHand) {
+      return { smallBlind: level.sb, bigBlind: level.bb }
+    }
+  }
+  return { smallBlind: MAX_BLINDS.sb, bigBlind: MAX_BLINDS.bb }
+}
+
+// ---------------------------------------------------------------------------
+// 锦标赛结果检测
+// ---------------------------------------------------------------------------
+
+export type TournamentResult = 'playing' | 'victory' | 'defeated'
+
+export function getTournamentResult(players: Player[]): TournamentResult {
+  const activePlayers = players.filter(p => p.chips > 0)
+  if (activePlayers.length <= 1 && activePlayers[0]?.id === 0) return 'victory'
+  if (players[0].chips === 0) return 'defeated'
+  return 'playing'
+}
+
 const NPC_DATA = [
   { name: '吉安娜', avatar: '❄️' },
   { name: '萨尔',   avatar: '⚡' },
@@ -121,11 +156,15 @@ export function createInitialState(): GameState {
 }
 
 export function startNewHand(state: GameState): GameState {
+  // Tournament end check: stop if human eliminated or is the last one standing
+  const result = getTournamentResult(state.players)
+  if (result !== 'playing') return { ...state, phase: GamePhase.Idle }
+
   const activeSeats = state.players
     .filter(p => p.chips > 0)
     .map(p => p.id)
 
-  if (activeSeats.length < 2) return state
+  if (activeSeats.length < 2) return { ...state, phase: GamePhase.Idle }
 
   // Rotate BTN
   const btnSeatIndex = state.handNumber === 0
@@ -159,18 +198,22 @@ export function startNewHand(state: GameState): GameState {
     }
   }
 
+  // Dynamic blinds based on hand number
+  const newHandNumber = state.handNumber + 1
+  const { smallBlind, bigBlind } = getBlindsForHand(newHandNumber)
+
   // Post blinds
   let pot = 0
   for (const p of players) {
     if (p.position === Position.SB) {
-      const sb = Math.min(state.smallBlind, p.chips)
+      const sb = Math.min(smallBlind, p.chips)
       p.chips -= sb
       p.currentBet = sb
       pot += sb
       if (p.chips === 0) p.isAllIn = true
     }
     if (p.position === Position.BB) {
-      const bb = Math.min(state.bigBlind, p.chips)
+      const bb = Math.min(bigBlind, p.chips)
       p.chips -= bb
       p.currentBet = bb
       pot += bb
@@ -188,12 +231,14 @@ export function startNewHand(state: GameState): GameState {
     deck,
     communityCards: [],
     pot,
-    currentBet: state.bigBlind,
-    minRaise: state.bigBlind,
+    currentBet: bigBlind,
+    minRaise: bigBlind,
+    smallBlind,
+    bigBlind,
     activePlayerIndex: 0,
     actionOrder,
     btnSeatIndex,
-    handNumber: state.handNumber + 1,
+    handNumber: newHandNumber,
     positions,
     winners: null,
     actedThisRound: new Set(),

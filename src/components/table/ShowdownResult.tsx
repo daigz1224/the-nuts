@@ -93,7 +93,7 @@ export function ShowdownResult({ gameState }: ShowdownResultProps) {
       {/* Hand rankings — all contenders (only when 5 community cards dealt) */}
       {rankings.length > 0 && <div className="bg-bg-surface/40 rounded-xl border border-amber-800/20 overflow-hidden">
         <div className="px-3 py-1.5 border-b border-amber-800/20">
-          <span className="text-[11px] font-mono text-text-muted">摊牌排名</span>
+          <span className="text-2xs font-mono text-text-muted">摊牌排名</span>
         </div>
         <div className="divide-y divide-amber-800/10">
           {rankings.map((r, idx) => {
@@ -124,7 +124,7 @@ export function ShowdownResult({ gameState }: ShowdownResultProps) {
                 </span>
 
                 {/* Hand description */}
-                <span className={`text-[11px] ml-auto shrink-0 ${isWinner ? 'font-bold text-yellow-300' : 'text-text-secondary'}`}>
+                <span className={`text-2xs ml-auto shrink-0 ${isWinner ? 'font-bold text-yellow-300' : 'text-text-secondary'}`}>
                   {r.hand.description}
                 </span>
               </div>
@@ -140,7 +140,7 @@ export function ShowdownResult({ gameState }: ShowdownResultProps) {
             ? 'bg-red-900/20 border-red-700/30'
             : 'bg-green-900/20 border-green-700/30'
         }`}>
-          <div className="text-[10px] text-text-muted mb-1">弃牌复盘</div>
+          <div className="text-3xs text-text-muted mb-1">弃牌复盘</div>
           <div className="text-sm text-text-primary">
             你弃掉的牌最终会组成 <span className="font-bold text-text-accent">{foldAnalysis.hand.description}</span>
           </div>

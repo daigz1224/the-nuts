@@ -41,12 +41,12 @@ export function ActionBar({ available, onAction, pot = 0, bigBlind }: ActionBarP
             : 'bg-amber-900/40 text-amber-300 border border-amber-500/30'
         }`}>
           需跟注 {available.callAmount}
-          <span className="ml-1.5 text-[10px] opacity-70">
+          <span className="ml-1.5 text-3xs opacity-70">
             ({(available.callAmount / bigBlind).toFixed(1)}x BB)
           </span>
         </div>
       ) : (
-        <span className={`text-[11px] font-mono ${available.canCall && available.callAmount > 0 ? 'text-text-secondary' : 'text-transparent'}`}>
+        <span className={`text-2xs font-mono ${available.canCall && available.callAmount > 0 ? 'text-text-secondary' : 'text-transparent'}`}>
           {available.canCall && available.callAmount > 0
             ? <>需跟注 <span className="text-text-accent font-bold">{available.callAmount}</span></>
             : '\u00A0'}

@@ -22,6 +22,8 @@ interface SavedData {
 interface GameStore {
   gameState: GameState
   isProcessingAI: boolean
+  eliminatedThisHand: number[]  // player IDs eliminated after last hand
+  chipsBeforeHand: number[]     // snapshot for elimination detection
 
   startNewHand: () => void
   playerAct: (action: ActionType, amount?: number) => void
@@ -64,18 +66,25 @@ function saveChips(gameState: GameState) {
 export const useGameStore = create<GameStore>((set, get) => ({
   gameState: createStateWithSavedChips(),
   isProcessingAI: false,
+  eliminatedThisHand: [],
+  chipsBeforeHand: [],
 
   startNewHand: () => {
-    set(state => ({
-      gameState: startNewHand(state.gameState),
-    }))
+    const { gameState } = get()
+    // Snapshot chips before the hand for elimination detection
+    const chipsBeforeHand = gameState.players.map(p => p.chips)
+    set({
+      gameState: startNewHand(gameState),
+      eliminatedThisHand: [],
+      chipsBeforeHand,
+    })
     // After dealing, process AI turns if AI acts first
     get().processAITurns()
   },
 
   resetGame: () => {
     try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
-    set({ gameState: createInitialState(), isProcessingAI: false })
+    set({ gameState: createInitialState(), isProcessingAI: false, eliminatedThisHand: [], chipsBeforeHand: [] })
   },
 
   playerAct: (action: ActionType, amount: number = 0) => {
@@ -99,7 +108,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const processNext = async () => {
       const { gameState } = get()
       if (gameState.phase === GamePhase.Showdown || gameState.phase === GamePhase.Idle) {
-        set({ isProcessingAI: false })
+        // Detect eliminated players
+        const { chipsBeforeHand } = get()
+        const eliminated = gameState.players
+          .filter(p => p.id !== 0 && chipsBeforeHand[p.id] > 0 && p.chips === 0)
+          .map(p => p.id)
+        set({ isProcessingAI: false, eliminatedThisHand: eliminated })
         saveChips(gameState)
         return
       }

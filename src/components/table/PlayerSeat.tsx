@@ -36,7 +36,7 @@ export function PlayerSeat({ player, isCurrentTurn, isHuman, gamePhase, compact 
     >
       {/* Position badge */}
       {player.position && (
-        <span className={`${compact ? 'text-[8px]' : 'text-[10px]'} font-mono text-text-secondary bg-bg-surface px-1 py-0.5 rounded`}>
+        <span className={`${compact ? 'text-5xs' : 'text-3xs'} font-mono text-text-secondary bg-bg-surface px-1 py-0.5 rounded`}>
           {POSITION_NAMES_ZH[player.position]}
         </span>
       )}
@@ -61,7 +61,7 @@ export function PlayerSeat({ player, isCurrentTurn, isHuman, gamePhase, compact 
       </div>
 
       {/* Name */}
-      <span className={`${compact ? 'text-[10px]' : 'text-xs'} font-medium ${isHuman ? 'text-text-accent' : 'text-text-primary'}`}>
+      <span className={`${compact ? 'text-3xs' : 'text-xs'} font-medium ${isHuman ? 'text-text-accent' : 'text-text-primary'}`}>
         {player.name}
       </span>
 
@@ -69,7 +69,7 @@ export function PlayerSeat({ player, isCurrentTurn, isHuman, gamePhase, compact 
       <ChipStack amount={player.chips} className={compact ? 'text-xs' : ''} />
 
       {/* Last action label OR current bet */}
-      <span className={`${compact ? 'text-[8px]' : 'text-[10px]'} font-mono h-4 flex items-center`}>
+      <span className={`${compact ? 'text-5xs' : 'text-3xs'} font-mono h-4 flex items-center`}>
         {player.isFolded ? (
           <span className="text-red-400/70">已弃牌</span>
         ) : player.isAllIn ? (
@@ -92,7 +92,7 @@ export function PlayerSeat({ player, isCurrentTurn, isHuman, gamePhase, compact 
 
       {/* "Your turn" indicator */}
       {isCurrentTurn && isHuman && (
-        <span className="text-[9px] font-bold text-amber-400 animate-pulse">轮到你了</span>
+        <span className="text-4xs font-bold text-amber-400 animate-pulse">轮到你了</span>
       )}
     </div>
   )
